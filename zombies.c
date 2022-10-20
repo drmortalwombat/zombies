@@ -1,267 +1,114 @@
-#include <c64/vic.h>
-#include <c64/sprites.h>
-#include <c64/rasterirq.h>
-#include <c64/memmap.h>
-#include <oscar.h>
-#include <string.h>
-#include <stdlib.h>
-#include "gamemusic.h"
-
-const char SpriteData[] = {
-	#embed spd_sprites lzo "zombies.spd"
-};
-
-const char PlantsHiresData[] = {
-	#embed ctm_chars "plants.ctm"
-};
-
-const char PlantsColor0Data[] = {
-	#embed ctm_attr1 "plants.ctm"
-};
-
-const char PlantsColor1Data[] = {
-	#embed ctm_attr2 "plants.ctm"
-};
+#include "zombies.h"
+#include "display.h"
 
 
-static char * const Screen	=	(char *)0xc800;
-static char * const Screen2=	(char *)0xcc00;
-static char * const Color	=	(char *)0xd800; 
-static char * const Sprites =  (char *)0xd000;
-static char * const Hires	=	(char *)0xe000;
-
-enum PlantType
+void zombies_init(void)
 {
-	PT_NONE,
-	PT_PEASHOOTER,
-	PT_SUNFLOWER,
-	PT_WALLNUT,
-	PT_CHERRYBOMB,
-	PT_SUNSHROOM,
-	PT_CACTUS,
-	PT_POTATOMINE,
-	PT_REPEATER,
+	for(char i=0; i<5; i++)
+		zombies_first[i] = 0xff;
 
-	NUM_PLANT_TYPES
-};
+	for(char i=0; i<31; i++)
+		zombies[i].next = i + 1;
 
-struct Plant
-{	
-	char		next;
-	PlantType	type;
-}	plants[5][10];
+	zombies[31].next = 0xff;
+	zombies_free = 0;
+}
 
-
-void plant_expand(char x, char y, char p)
+void zombies_add(char x, char y, ZombieType type)
 {
-	plants[y][x] = p;
-
-	char * hdp = Hires + 5 * 320 + 32 * x + 320 * 4 * y;
-	const char * sdp = PlantsHiresData + 8 * 16 * p;
-
-	for(char i=0; i<4; i++)
+	if (zombies_free != 0xff)
 	{
-		for(char j=0; j<8*4; j++)
-			hdp[j] = sdp[j];
-		hdp += 320;
-		sdp += 8 * 4;
+		char	s = zombies_free;
+		zombies_free = zombies[s].next;
+		zombies[s].x = x;
+		zombies[s].y = y;
+		zombies[s].phase = 0;
+		zombies[s].live = 1;
+		zombies[s].type = type;
+
+		zombies[s].next = zombies_first[y];
+		zombies_first[y] = s;
 	}
+}
 
-	char * cdp = Color + 5 * 40 + 4 * x + 40 * 4 * y;
-	hdp = Screen + 5 * 40 + 4 * x + 40 * 4 * y;
+char	zombies_msbx[5];
+char	zombies_basemsbx;
 
-	for(char i=0; i<4; i++)
+void zombies_set_msbx(char mask, char val)
+{
+	if ((zombies_basemsbx & mask) != val)
 	{
-		for(char j=0; j<4; j++)
+		zombies_basemsbx = (zombies_basemsbx & ~mask) | val;
+		for(char y=0; y<5; y++)
 		{
-			cdp[j] = PlantsColor0Data[16 * p + 4 * i + j];
-			hdp[j] = PlantsColor1Data[16 * p + 4 * i + j];
-		}
-		cdp += 40;
-		hdp += 40;
-	}
-}
-
-RIRQCode	*	zombieMux[6];
-RIRQCode		musicMux;
-char			zombieMsbX[6];
-
-#define ZOMBIE_SPRITES	6
-
-void zombie_move(char row, char zi, unsigned x, char phase)
-{
-	rirq_data(zombieMux[row], 1 * ZOMBIE_SPRITES + zi, x & 0xff);
-	rirq_data(zombieMux[row], 2 * ZOMBIE_SPRITES + zi, phase + 64);
-
-	if (x & 0x100)
-		zombieMsbX[row] |= 1 << zi;
-	else
-		zombieMsbX[row] &= ~(1 << zi);
-
-	rirq_data(zombieMux[row], 3 * ZOMBIE_SPRITES, zombieMsbX[row]);
-}
-
-__interrupt void music_irq(void)
-{
-	vic.color_border++;
-	music_play();
-	vic.color_border--;
-}
-
-char shot_mask[8] = {
-	0x3c, 0xff, 0xff, 0xff, 0xff, 0x3c, 0x00, 0x00
-};
-char shot_color[8] = {
-	0x00, 0x3c, 0x3c, 0x3c, 0x3c, 0x00, 0x00, 0x00
-};
-
-
-
-void shot_draw(char x, char y)
-{
-	char * dp = Hires + 320 * (y + 5) + (x & 0xfc) * 2;
-	char * cp = Color + 40 * (y + 5) + (x >> 2);
-
-	char sx = 8 - (x & 3) * 2;
-
-	for(char i=0; i<8; i++)
-	{
-		unsigned	m = ~(shot_mask[i] << sx);
-		unsigned	d = shot_color[i] << sx;
-
-		dp[i] = (dp[i] & (m >> 8)) | (d >> 8);
-		dp[i + 8] = (dp[i + 8] & m) | d;
-	}
-
-	cp[0] = VCOL_YELLOW;
-	if (x & 3)
-		cp[1] = VCOL_YELLOW;
-}
-
-void field_clear(char x, char y)
-{
-	char * dp = Hires + 320 * (y + 5) + x * 8;
-	char * cp = Color + 40 * (y + 5) + x;
-	char p = plant_grid[y >> 2][x >> 2];
-
-	const char * sp = PlantsHiresData + 8 * 16 * p + 32 * (y & 3) + 8 * (x & 3);
-
-	for(char i=0; i<8; i++)
-		dp[i] = sp[i];
-	cp[0] = PlantsColor0Data[16 * p + 4 * (y & 3) + (x & 3)];
-}
-
-void shot_clear(char x, char y)
-{
-	field_clear(x >> 2, y);
-	if (x & 3)
-		field_clear((x >> 2) + 1, y);
-}
-
-int main(void)
-{
-	mmap_set(MMAP_NO_BASIC);
-
-	mmap_trampoline();
-
-	mmap_set(MMAP_RAM);
-
-	oscar_expand_lzo(Sprites, SpriteData);
-
-	mmap_set(MMAP_NO_ROM);
-
-	vic_setmode(VICM_HIRES_MC, Screen, Hires);
-
-	vic.color_border = VCOL_BLACK;
-	vic.color_back = VCOL_BLACK;
-
-	spr_init(Screen);
-	vic.spr_mcolor0 = VCOL_BLACK;
-	vic.spr_mcolor1 = VCOL_WHITE;
-
-	memset(Screen, 0, 1000);
-	memset(Color, 0, 1000);
-
-
-	for(char y=0; y<5; y++)
-	{
-		for(char x=0; x<10; x++)
-		{
-			char r = rand() & 31;
-			plant_expand(x, y, r < 8 ? r + 1 : 0);
+			rirq_data(zombieMux[y], 3 * ZOMBIE_SPRITES, zombies_msbx[y] | zombies_basemsbx);
 		}
 	}
+}
 
-	for(char i=0; i<20; i++)
+void zombies_advance(char y)
+{
+	char msbx = 0;
+	char nz = 0;
+
+	char	p = 0xff;
+	char s = zombies_first[y];
+	while (s != 0xff)
 	{
-		shot_draw(5 * i, i);
-	}
+		char n = zombies[s].next;
 
-	for(char i=0; i<20; i++)
-	{
-		shot_clear(5 * i, i);
-	}
-
-	music_init(1);
-
-	rirq_init_kernal();
-
-	for(int i=0; i<6; i++)
-	{
-		bool	music = (i == 0) || (i == 3);
-
-		zombieMux[i] = rirq_alloc(ZOMBIE_SPRITES * 3 + 1 + music);
-
-		for(int j=0; j<ZOMBIE_SPRITES; j++)
+		zombies[s].x --;
+		if (zombies[s].live == 0)
 		{
-			rirq_write(zombieMux[i], 0 * ZOMBIE_SPRITES + j, &(vic.spr_pos[j].y), 50 + 5 * 8 + 4 * 8 * i + 8);
-			rirq_write(zombieMux[i], 1 * ZOMBIE_SPRITES + j, &(vic.spr_pos[j].x), 24 + 40 * j);
-			rirq_write(zombieMux[i], 2 * ZOMBIE_SPRITES + j, Screen + 0x3f8 + j, 64 + j);
-		}
-		rirq_write(zombieMux[i], 3 * ZOMBIE_SPRITES, &vic.spr_msbx, 0);
-		if (music)
-			rirq_call(zombieMux[i], 3 * ZOMBIE_SPRITES + 1, music_irq);
-
-		rirq_set(i, 50 + 5 * 8 + 4 * 8 * i, zombieMux[i]);
-	}
-
-	rirq_sort();
-
-	rirq_start();
-
-	for(int j=0; j<ZOMBIE_SPRITES; j++)
-		vic.spr_color[j] = VCOL_MED_GREY;
-	vic.spr_enable = 0x3f;
-	vic.spr_multi = 0x3f;
-
-	int	t = 0;
-	for(;;)
-	{
-		for(int i=0; i<6; i++)
-		{
-			for(int j=0; j<6; j++)
+			switch (zombies[s].type)
 			{
-				zombie_move(i, j, 360 - 3 * i - t - 30 * j, (t + i + j) % 6);
+				case ZT_BASE:
+					break;
+				case ZT_HEAD:
+					zombies[s].type = ZT_BASE;
+					zombies[s].live = 1;
+					break;
 			}
 		}
 
-		t++;
-		if (t > 300)
-			t = 0;
-
-		for(char i=0; i<20; i++)
+		if (zombies[s].live > 0 && zombies[s].x > 0)
 		{
-			shot_clear(t + 5 * i, i);
-			shot_draw(t + 5 * i + 1, i);
+			zombies[s].phase++;
+			if (zombies[s].phase == 6)
+				zombies[s].phase = 0;
+
+			unsigned	x = zombies[s].x << 1;
+			char		img = zombies[s].phase + 16 + 16 * zombies[s].type;
+
+			rirq_data(zombieMux[y], 1 * ZOMBIE_SPRITES + nz, x & 0xff);
+			rirq_data(zombieMux[y], 2 * ZOMBIE_SPRITES + nz, img);
+
+			if (x & 0x100)
+				msbx |= 1 << nz;
+			nz++;
+
+			p = s;
+		}
+		else
+		{
+			if (p == 0xff)
+				zombies_first[y] = n;
+			else
+				zombies[p].next = n;
+			zombies[s].next = zombies_free;
+			zombies_free = s;
+
 		}
 
-//		vic_waitFrame();
-//		vic_waitFrame();
-
-//		vic_waitFrame();
-//		vic_waitFrame();
+		s = n;
 	}
 
+	while (nz < ZOMBIE_SPRITES)
+	{
+		rirq_data(zombieMux[y], 1 * ZOMBIE_SPRITES + nz, 0);
+		nz++;
+	}
 
-	return 0;
+	zombies_msbx[y] = msbx;
+	rirq_data(zombieMux[y], 3 * ZOMBIE_SPRITES, msbx | zombies_basemsbx);
 }
