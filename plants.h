@@ -15,6 +15,9 @@ enum PlantType
 	PT_POTATOMINE,
 	PT_REPEATER,
 
+	PT_SUN,
+	PT_SHOVEL,
+
 	NUM_PLANT_TYPES
 };
 
@@ -30,16 +33,44 @@ struct Shot
 {
 	char		next;
 	char		x, y;
+	char		pad;
+};
+
+struct MenuItem
+{
+	PlantType	type;
+	unsigned	price;
+	char		cool, warm;
 };
 
 extern Plant	plant_grid[5][10];
 extern char		plant_first[5];
 extern Shot		shots[32];
 extern char		shots_first, shots_free;
+extern MenuItem	menu[10];
+extern char		menu_size;
+extern int 		sun_x, sun_y, sun_vx, sun_vy;
+extern bool		sun_active;
+extern char		sun_power;
+
+#pragma align(plant_grid, 256)
+#pragma align(shots, 256)
+
+void sun_advance(void);
+
+void sun_add(char x, char y, char vy, char power);
 
 void menu_draw(char x, char t);
 
 void menu_draw_price(char x, unsigned v);
+
+void menu_init(void);
+
+void menu_cooldown(char x);
+
+void menu_warmup(void);
+
+void menu_add_item(PlantType type, unsigned price, char warm);
 
 // x and y in plant coords
 void plant_draw(char x, char y);

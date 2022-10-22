@@ -23,6 +23,10 @@ const char DigitsHiresData[] = {
 Plant	plant_grid[5][10];
 char	plant_first[5];
 
+int 		sun_x, sun_y, sun_vx, sun_vy;
+bool		sun_active;
+char		sun_power;
+
 void plant_grid_clear(void)
 {
 	for(char y=0; y<5; y++)
@@ -35,8 +39,24 @@ void plant_grid_clear(void)
 
 void plant_place(char x, char y, PlantType p)
 {
-	plant_grid[y][x].type = p;
-	plant_grid[y][x].cool = 5 * x + 4 * y + 6;
+	Plant	*	pp = plant_grid[y] + x;
+	pp->type = p;
+
+	switch (p)
+	{
+		case PT_SUNFLOWER:
+			pp->cool = 64;
+			pp->live = 5;
+			break;
+		case PT_PEASHOOTER:
+			pp->cool = 5;
+			pp->live = 5;
+			break;
+		case PT_WALLNUT:
+			pp->cool = 0;
+			pp->live = 20;
+			break;
+	}
 
 	char i = plant_first[y];
 	if (i > x)
@@ -54,7 +74,7 @@ void plant_place(char x, char y, PlantType p)
 		plant_grid[y][pi].next = x;
 	}
 
-	plant_grid[y][x].next = i;
+	pp->next = i;
 }
 
 void plant_remove(char x, char y)
@@ -105,6 +125,64 @@ void menu_draw(char x, char t)
 		cdp += 40;
 		hdp += 40;
 	}	
+}
+
+static const char colory_grey[16] = {
+	VCOL_BLACK,
+	VCOL_WHITE,
+	VCOL_DARK_GREY,
+	VCOL_LT_GREY,
+	VCOL_MED_GREY,
+	VCOL_MED_GREY,
+	VCOL_DARK_GREY,
+	VCOL_LT_GREY,
+
+	VCOL_MED_GREY,
+	VCOL_DARK_GREY,
+	VCOL_MED_GREY,
+	VCOL_DARK_GREY,
+	VCOL_MED_GREY,
+	VCOL_LT_GREY,
+	VCOL_MED_GREY,
+	VCOL_LT_GREY
+};
+
+void menu_cooldown(char x)
+{
+	char	t = menu[x].type;
+	menu[x].cool = 0xff;
+
+	char * cdp = Color + 4 * x;
+	char * hdp = Screen + 4 * x;
+
+	for(char i=0; i<4; i++)
+	{
+		#pragma unroll(full)
+		for(char j=0; j<4; j++)
+		{
+			cdp[j] = colory_grey[PlantsColor0Data[16 * t + 4 * i + j] & 0x0f];
+			char c = PlantsColor1Data[16 * t + 4 * i + j];
+			hdp[j] = colory_grey[c & 0x0f] | (colory_grey[c >> 4] << 4);
+		}
+		cdp += 40;
+		hdp += 40;
+	}	
+}
+
+
+void menu_draw_color_line(char x, char y)
+{
+	char	t = menu[x].type;
+
+	char * cdp = Color + 4 * x + 40 * y;
+	char * hdp = Screen + 4 * x + 40 * y;
+
+	#pragma unroll(full)
+	for(char j=0; j<4; j++)
+	{
+		cdp[j] = PlantsColor0Data[16 * t + 4 * y + j];
+		hdp[j] = PlantsColor1Data[16 * t + 4 * y + j];
+	}
 }
 
 void menu_draw_price(char x, unsigned v)
@@ -172,6 +250,82 @@ void menu_draw_price(char x, unsigned v)
 		hdp[j] = VCOL_LT_GREY | (VCOL_DARK_GREY << 4);
 	}
 }
+
+void menu_init(void)
+{
+	memset(Hires, 0, 320 * 5);
+	menu_size = 0;
+}
+
+void menu_add_item(PlantType type, unsigned price, char warm)
+{
+	menu[menu_size].type = type;
+	menu[menu_size].price = price;
+	menu[menu_size].warm = warm;
+	menu[menu_size].cool = 0;
+	menu_draw(menu_size, type);
+	menu_draw_price(menu_size, price);
+	menu_size++;
+}
+
+void menu_warmup(void)
+{
+	for(char i=1; i<menu_size; i++)
+	{
+		if (menu[i].cool)
+		{
+			if (menu[i].cool > menu[i].warm)
+			{
+				char	c = menu[i].cool - menu[i].warm;
+				if ((c ^ menu[i].cool) & 0xc0)
+				{
+					menu_draw_color_line(i, (c >> 6) + 1);
+				}
+				menu[i].cool = c;
+			}
+			else
+			{
+				menu[i].cool = 0;
+				menu_draw_color_line(i, 0);
+			}
+		}
+	}
+}
+
+void sun_advance(void)
+{
+	if (sun_active)
+	{
+		if (sun_vy < 0)
+			sun_vx -= (sun_x - 32) >> 3;
+		sun_vy -= (sun_y - 50) >> 3;
+		sun_x += sun_vx >> 4;
+		sun_y += sun_vy >> 4;
+		if (sun_y < 50 || sun_x < 0)
+		{
+			sun_active = false;
+			spr_show(7, false);
+			menu[0].price += sun_power;
+			menu_draw_price(0, menu[0].price);
+		}
+		else
+		{
+			spr_set(7, true, sun_x, sun_y, 16 + 111, VCOL_YELLOW, true, false, false);
+			zombies_set_msbx(0x80, (sun_x & 0x100) >> 1);
+		}
+	}
+}
+
+void sun_add(char x, char y, char vy, char power)
+{
+	sun_active = true;
+	sun_x = 32 + 32 * x;
+	sun_y = y;
+	sun_vx = 0;
+	sun_vy = vy;
+	sun_power = power;
+}
+
 
 void plant_draw(char x, char y)
 {
@@ -344,6 +498,8 @@ void plants_iterate(char y)
 	char s = plant_first[y];
 	while (s != 0xff)
 	{
+		__assume(s < 10);
+		
 		Plant	*	p = plant_grid[y] + s;
 		if (p->cool)
 			p->cool--;
@@ -351,8 +507,16 @@ void plants_iterate(char y)
 		{
 			if (p->type == PT_PEASHOOTER)
 			{
-				p->cool = 32;
+				p->cool = 16;
 				shots_add(16 * s + 12, 4 * y + 1);
+			}
+			else if (p->type == PT_SUNFLOWER)
+			{
+				if (!sun_active)
+				{
+					p->cool = 64;
+					sun_add(s, 50 + 8 * 5 + 32 * y, 0, 25);					
+				}
 			}
 		}
 		s = p->next;

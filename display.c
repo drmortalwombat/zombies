@@ -6,7 +6,25 @@ const char SpriteData[] = {
 	#embed spd_sprites lzo "zombies.spd"
 };
 
+static const char colory_grey[16] = {
+	VCOL_BLACK,
+	VCOL_WHITE,
+	VCOL_DARK_GREY,
+	VCOL_LT_GREY,
+	VCOL_MED_GREY,
+	VCOL_MED_GREY,
+	VCOL_DARK_GREY,
+	VCOL_LT_GREY,
 
+	VCOL_MED_GREY,
+	VCOL_DARK_GREY,
+	VCOL_MED_GREY,
+	VCOL_DARK_GREY,
+	VCOL_MED_GREY,
+	VCOL_LT_GREY,
+	VCOL_MED_GREY,
+	VCOL_LT_GREY
+};
 
 __interrupt void music_irq(void)
 {
@@ -14,7 +32,6 @@ __interrupt void music_irq(void)
 	music_play();
 	vic.color_border--;
 }
-
 
 
 void display_init(void)
@@ -41,7 +58,7 @@ void display_init(void)
 	memset(Screen, 0, 1000);
 	memset(Color, 0, 1000);
 
-	music_init(1);
+	music_init(0);
 
 	rirq_init_kernal();
 
@@ -55,7 +72,7 @@ void display_init(void)
 		{
 			rirq_write(zombieMux[i], 0 * ZOMBIE_SPRITES + j, &(vic.spr_pos[j].y), 50 + 5 * 8 + 4 * 8 * i + 8);
 			rirq_write(zombieMux[i], 1 * ZOMBIE_SPRITES + j, &(vic.spr_pos[j].x), 0);
-			rirq_write(zombieMux[i], 2 * ZOMBIE_SPRITES + j, Screen + 0x3f8 + j, 64);
+			rirq_write(zombieMux[i], 2 * ZOMBIE_SPRITES + j, Screen + 0x3f8 + j, 16);
 		}
 		rirq_write(zombieMux[i], 3 * ZOMBIE_SPRITES, &vic.spr_msbx, 0);
 		if (music)
@@ -63,6 +80,20 @@ void display_init(void)
 
 		rirq_set(i, 50 + 5 * 8 + 4 * 8 * i, zombieMux[i]);
 	}
+
+	rirq_build(&menuMux, 4);
+	rirq_write(&menuMux, 0, &(vic.spr_pos[6].y), 50 - 10);
+	rirq_write(&menuMux, 1, &(vic.spr_pos[6].x), 24);
+	rirq_write(&menuMux, 2, &vic.spr_msbx, 0);
+	rirq_write(&menuMux, 3, Screen + 0x3f8 + 6, 16 + 109);
+	rirq_set(6, 10, &menuMux);
+
+	rirq_build(&cursorMux, 4);
+	rirq_write(&cursorMux, 0, &(vic.spr_pos[6].y), 50 - 10);
+	rirq_write(&cursorMux, 1, &(vic.spr_pos[6].x), 24);
+	rirq_write(&cursorMux, 2, &vic.spr_msbx, 0);
+	rirq_write(&cursorMux, 3, Screen + 0x3f8 + 6, 16 + 108);
+	rirq_set(7, 50 + 32, &cursorMux);
 
 	rirq_sort();
 

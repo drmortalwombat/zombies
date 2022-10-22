@@ -10,6 +10,7 @@ enum Tune
 {
 	TUNE_TITLE,
 	TUNE_GAME_1,
+	TUNE_GAME_2,
 };
 
 void music_init(Tune tune);

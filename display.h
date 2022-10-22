@@ -14,8 +14,11 @@ static char * const Hires	=	(char *)0xe000;
 #define ZOMBIE_SPRITES	6
 
 extern RIRQCode	*	zombieMux[5];
+extern RIRQCode		menuMux, cursorMux;
 
 void display_init(void);
+
+void set_cursor_sprite(char x, char y);
 
 #pragma compile("display.c")
 

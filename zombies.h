@@ -15,10 +15,13 @@ struct Zombie
 	char		next;
 	char		live;
 	ZombieType	type;
+	char		pad0, pad1;
 };
 
 extern Zombie	zombies[32];
 extern char		zombies_first[5], zombies_free;
+
+#pragma align(zombies, 256)
 
 void zombies_init(void);
 

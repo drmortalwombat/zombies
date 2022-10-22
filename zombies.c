@@ -1,5 +1,6 @@
 #include "zombies.h"
 #include "display.h"
+#include "plants.h"
 
 
 void zombies_init(void)
@@ -23,7 +24,7 @@ void zombies_add(char x, char y, ZombieType type)
 		zombies[s].x = x;
 		zombies[s].y = y;
 		zombies[s].phase = 0;
-		zombies[s].live = 1;
+		zombies[s].live = 5;
 		zombies[s].type = type;
 
 		zombies[s].next = zombies_first[y];
@@ -57,7 +58,23 @@ void zombies_advance(char y)
 	{
 		char n = zombies[s].next;
 
-		zombies[s].x --;
+		char px = (zombies[s].x - 8) >> 4;
+
+		if (px < 9 && plant_grid[y][px].type != PT_NONE)
+		{
+			if (zombies[s].phase == 0)
+			{
+				plant_grid[y][px].live--;
+				if (plant_grid[y][px].live == 0)
+				{
+					plant_remove(px, y);
+					plant_draw(px, y);
+				}
+			}
+		}
+		else
+			zombies[s].x --;
+
 		if (zombies[s].live == 0)
 		{
 			switch (zombies[s].type)
