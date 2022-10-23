@@ -13,13 +13,15 @@ struct Zombie
 	char		x;
 	char		phase;
 	char		next;
-	char		live;
+	signed char	live;
+	char		frozen;
 	ZombieType	type;
-	char		pad0, pad1;
+	char		pad0;
 };
 
 extern Zombie	zombies[32];
 extern char		zombies_first[5], zombies_free;
+extern char		zombies_left[5], zombies_right[5];
 
 #pragma align(zombies, 256)
 

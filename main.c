@@ -102,15 +102,15 @@ int main(void)
 
 	cusor_show(0, 0);
 
-	static const unsigned prices[10] = {
-		371, 25, 100, 250, 44, 30, 22, 111, 4987, 0
-	};
 
 	menu_init();
 	menu_add_item(PT_SUN, 400, 0);
 	menu_add_item(PT_SUNFLOWER, 50, 17);
 	menu_add_item(PT_PEASHOOTER, 100, 17);
-	menu_add_item(PT_WALLNUT, 50, 4);
+	menu_add_item(PT_SNOWPEA, 175, 17);
+	menu_add_item(PT_WALLNUT, 50, 6);
+	menu_add_item(PT_POTATOMINE, 25, 6);
+	menu_add_item(PT_REPEATER, 200, 17);
 	menu_add_item(PT_SHOVEL, 0, 17);
 	menu_set(1);
 	cursor_move(0, 0);

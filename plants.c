@@ -19,6 +19,7 @@ const char DigitsHiresData[] = {
 	#embed ctm_chars "digits.ctm"
 };
 
+#pragma align(PlantsHiresData, 256)
 
 Plant	plant_grid[5][10];
 char	plant_first[5];
@@ -26,6 +27,26 @@ char	plant_first[5];
 int 		sun_x, sun_y, sun_vx, sun_vy;
 bool		sun_active;
 char		sun_power;
+
+char * HiresTab[25] = {
+	Hires +  0 * 320, Hires +  1 * 320, Hires +  2 * 320, Hires +  3 * 320,
+	Hires +  4 * 320, Hires +  5 * 320, Hires +  6 * 320, Hires +  7 * 320,
+	Hires +  8 * 320, Hires +  9 * 320, Hires + 10 * 320, Hires + 11 * 320,
+	Hires + 12 * 320, Hires + 13 * 320, Hires + 14 * 320, Hires + 15 * 320,
+	Hires + 16 * 320, Hires + 17 * 320, Hires + 18 * 320, Hires + 19 * 320,
+	Hires + 20 * 320, Hires + 21 * 320, Hires + 22 * 320, Hires + 23 * 320,
+	Hires + 24 * 320
+};
+
+char * ColorTab[25] = {
+	Color +  0 * 40, Color +  1 * 40, Color +  2 * 40, Color +  3 * 40,
+	Color +  4 * 40, Color +  5 * 40, Color +  6 * 40, Color +  7 * 40,
+	Color +  8 * 40, Color +  9 * 40, Color + 10 * 40, Color + 11 * 40,
+	Color + 12 * 40, Color + 13 * 40, Color + 14 * 40, Color + 15 * 40,
+	Color + 16 * 40, Color + 17 * 40, Color + 18 * 40, Color + 19 * 40,
+	Color + 20 * 40, Color + 21 * 40, Color + 22 * 40, Color + 23 * 40,
+	Color + 24 * 40
+};
 
 void plant_grid_clear(void)
 {
@@ -49,12 +70,18 @@ void plant_place(char x, char y, PlantType p)
 			pp->live = 5;
 			break;
 		case PT_PEASHOOTER:
+		case PT_REPEATER:
 			pp->cool = 5;
 			pp->live = 5;
 			break;
 		case PT_WALLNUT:
 			pp->cool = 0;
-			pp->live = 20;
+			pp->live = 50;
+			break;
+		case PT_POTATOMINE:
+			pp->type = PT_POTATOMINE_HIDDEN;
+			pp->cool = 64;
+			pp->live = 5;
 			break;
 	}
 
@@ -79,6 +106,8 @@ void plant_place(char x, char y, PlantType p)
 
 void plant_remove(char x, char y)
 {
+	__assume(x < 10);
+
 	plant_grid[y][x].type = PT_NONE;
 
 	char i = plant_first[y];
@@ -91,6 +120,7 @@ void plant_remove(char x, char y)
 		char pi;
 		do 
 		{
+			__assume(i < 10);
 			pi = i;
 			i = plant_grid[y][i].next;
 		} while (i != x);
@@ -361,8 +391,13 @@ void plant_draw(char x, char y)
 
 void plant_draw_field(char x, char y)
 {
-	char * dp = Hires + 320 * (y + 5) + x * 8;
-	char * cp = Color + 40 * (y + 5) + x;
+	__assume(y < 20);
+	__assume(x < 40);
+
+	char * dp = HiresTab[y + 5] + x * 8;
+//	char * dp = Hires + 320 * (y + 5) + x * 8;
+	char * cp = ColorTab[y + 5] + x;
+//	char * cp = Color + 40 * (y + 5) + x;
 	PlantType p = plant_grid[y >> 2][x >> 2].type;
 
 	const char * sp = PlantsHiresData + 8 * 16 * p + 32 * (y & 3) + 8 * (x & 3);
@@ -381,12 +416,14 @@ void shots_init(void)
 	shots_free = 0;
 }
 
-void shot_draw(char x, char y)
+void shot_draw(char x, char y, char c)
 {
 	__assume(y < 20);
 
-	char * dp = Hires + 320 * (y + 5) + (x & 0xfc) * 2 + 2;
-	char * cp = Color + 40 * (y + 5) + (x >> 2);
+	char * dp = HiresTab[y + 5] + (x & 0xfc) * 2 + 2;
+//	char * dp = Hires + 320 * (y + 5) + (x & 0xfc) * 2 + 2;
+	char * cp = ColorTab[y + 5] + (x >> 2);
+//	char * cp = Color + 40 * (y + 5) + (x >> 2);
 
 	switch(x & 3)
 	{
@@ -420,9 +457,9 @@ void shot_draw(char x, char y)
 			break;
 	}
 
-	cp[0] = VCOL_YELLOW;
+	cp[0] = c;
 	if (x & 3)
-		cp[1] = VCOL_YELLOW;
+		cp[1] = c;
 }
 
 
@@ -433,7 +470,7 @@ void shot_clear(char x, char y)
 		plant_draw_field((x >> 2) + 1, y);
 }
 
-void shots_add(char x, char y)
+void shots_add(char x, char y, ShotType type)
 {
 	if (shots_free != 0xff)
 	{
@@ -441,10 +478,13 @@ void shots_add(char x, char y)
 		shots_free = shots[s].next;
 		shots[s].x = x;
 		shots[s].y = y;
+		shots[s].type = type;
 		shots[s].next = shots_first;
 		shots_first = s;
 	}
 }
+
+const char shot_colors[2] = {VCOL_YELLOW, VCOL_LT_BLUE};
 
 void shots_advance(void)
 {
@@ -455,18 +495,22 @@ void shots_advance(void)
 		shot_clear(shots[s].x, shots[s].y);
 		char n = shots[s].next;
 		shots[s].x++;
+		char y = shots[s].y >> 2;
+		char x = shots[s].x + 12;
+
 		bool	keep = true;
 
 		if (shots[s].x > 152)
 			keep = false;
-		else
+		else if (zombies_left[y] <= x)
 		{
-			char z = zombies_first[shots[s].y >> 2];
-			char x = shots[s].x + 12;
+			char z = zombies_first[y];
 			while (z != 0xff)
 			{
 				if (zombies[z].x <= x && zombies[z].x > x - 10 && zombies[z].live > 0)
 				{
+					if (shots[s].type == ST_FROST)
+						zombies[z].frozen = 5;
 					zombies[z].live--;
 					keep = false;
 					break;
@@ -477,7 +521,7 @@ void shots_advance(void)
 
 		if (keep)
 		{
-			shot_draw(shots[s].x, shots[s].y);
+			shot_draw(shots[s].x, shots[s].y, shot_colors[shots[s].type]);
 			p = s;
 		}
 		else
@@ -495,30 +539,97 @@ void shots_advance(void)
 
 void plants_iterate(char y)
 {
+	char ps = 0xff;
 	char s = plant_first[y];
+	char right = zombies_right[y] >> 4;
+
 	while (s != 0xff)
 	{
 		__assume(s < 10);
-		
+
 		Plant	*	p = plant_grid[y] + s;
+		char n = p->next;
+
 		if (p->cool)
 			p->cool--;
 		else
 		{
-			if (p->type == PT_PEASHOOTER)
+			switch (p->type)
 			{
-				p->cool = 16;
-				shots_add(16 * s + 12, 4 * y + 1);
-			}
-			else if (p->type == PT_SUNFLOWER)
-			{
-				if (!sun_active)
-				{
-					p->cool = 64;
-					sun_add(s, 50 + 8 * 5 + 32 * y, 0, 25);					
-				}
+				case PT_PEASHOOTER:
+					if (s < right)
+					{
+						p->cool = 16;
+						shots_add(16 * s + 12, 4 * y + 1, ST_PEA);
+					}
+					break;
+
+				case PT_REPEATER:
+					if (s < right)
+					{
+						p->cool = 16;
+						shots_add(16 * s + 16, 4 * y + 1, ST_PEA);
+						shots_add(16 * s + 8, 4 * y + 1, ST_PEA);
+					}
+					break;
+
+				case PT_SNOWPEA:
+					if (s < right)
+					{
+						p->cool = 16;
+						shots_add(16 * s + 12, 4 * y + 1, ST_FROST);
+					}
+					break;
+
+				case PT_POTATOMINE_HIDDEN:
+					p->cool = 8;
+					p->type = PT_POTATOMINE;
+					plant_draw(s, y);
+					break;
+
+				case PT_POTATOMINE_EXPLODED:
+					p->type = PT_NONE;
+					plant_draw(s, y);
+
+					if (ps != 0xff)
+						plant_grid[y][ps].next = n;
+					else
+						plant_first[y] = n;
+					s = ps;
+					break;
+
+				case PT_POTATOMINE:
+					p->cool = 8;
+
+					char z = zombies_first[y];
+					char x = s * 16;
+					while (z != 0xff)
+					{
+						if (zombies[z].x <= x + 24 && zombies[z].x + 8 > x && zombies[z].live > 0)
+						{
+							zombies[z].live -= 10;
+							p->type = PT_POTATOMINE_EXPLODED;
+							p->cool = 16;
+						}
+						z = zombies[z].next;
+					}
+					if (p->type == PT_POTATOMINE_EXPLODED)
+					{
+						plant_draw(s, y);			
+					}
+					break;
+
+				case PT_SUNFLOWER:
+					if (!sun_active)
+					{
+						p->cool = 64;
+						sun_add(s, 50 + 8 * 5 + 32 * y, 0, 25);					
+					}
+					break;
 			}
 		}
-		s = p->next;
+
+		ps = s;
+		s = n;
 	}
 }

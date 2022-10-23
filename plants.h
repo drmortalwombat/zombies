@@ -18,6 +18,10 @@ enum PlantType
 	PT_SUN,
 	PT_SHOVEL,
 
+	PT_SNOWPEA,
+	PT_POTATOMINE_HIDDEN,
+	PT_POTATOMINE_EXPLODED,
+
 	NUM_PLANT_TYPES
 };
 
@@ -29,11 +33,17 @@ struct Plant
 	char		live;
 };
 
+enum ShotType
+{
+	ST_PEA,
+	ST_FROST
+};
+
 struct Shot
 {
 	char		next;
 	char		x, y;
-	char		pad;
+	ShotType	type;
 };
 
 struct MenuItem
@@ -86,7 +96,7 @@ void plant_remove(char x, char y);
 
 void shots_init(void);
 
-void shots_add(char x, char y);
+void shots_add(char x, char y, ShotType type);
 
 void shots_advance(void);
 
