@@ -4,7 +4,7 @@
 
 #pragma section( music, 0)
 
-#pragma region( music, 0xa000, 0xb400, , , {music} )
+#pragma region( music, 0xa000, 0xc000, , , {music} )
 
 #pragma data(music)
 

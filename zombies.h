@@ -3,8 +3,11 @@
 
 enum ZombieType
 {
-	ZT_BASE,
-	ZT_HEAD
+	ZOMBIE_NONE,
+	ZOMBIE_CORPSE,
+	
+	ZOMBIE_BASE,
+	ZOMBIE_CONE,
 };
 
 struct Zombie
@@ -32,6 +35,8 @@ void zombies_add(char x, char y, ZombieType type);
 void zombies_set_msbx(char mask, char val);
 
 void zombies_advance(char y);
+
+void zombies_splash(char x, char y, char w, char damage);
 
 #pragma compile("zombies.c")
 

@@ -83,6 +83,10 @@ void plant_place(char x, char y, PlantType p)
 			pp->cool = 64;
 			pp->live = 5;
 			break;
+		case PT_CHERRYBOMB:
+			pp->cool = 5;
+			pp->live = 20;
+			break;
 	}
 
 	char i = plant_first[y];
@@ -587,6 +591,7 @@ void plants_iterate(char y)
 					plant_draw(s, y);
 					break;
 
+				case PT_EXPLOSION_3:
 				case PT_POTATOMINE_EXPLODED:
 					p->type = PT_NONE;
 					plant_draw(s, y);
@@ -625,6 +630,33 @@ void plants_iterate(char y)
 						p->cool = 64;
 						sun_add(s, 50 + 8 * 5 + 32 * y, 0, 25);					
 					}
+					break;
+
+				case PT_CHOMPER_EAT:
+					p->type = PT_CHOMPER;
+					plant_draw(s, y);
+					break;
+
+				case PT_CHERRYBOMB:
+					zombies_splash(s * 16 + 20, y, 16, 10);
+					if (y > 0)
+						zombies_splash(s * 16 + 20, y - 1, 16, 10);
+					if (y < 4)
+						zombies_splash(s * 16 + 20, y + 1, 16, 10);
+					p->type = PT_EXPLOSION_0;
+					plant_draw(s, y);
+					break;					
+				case PT_EXPLOSION_0:
+					p->type = PT_EXPLOSION_1;
+					plant_draw(s, y);
+					break;
+				case PT_EXPLOSION_1:
+					p->type = PT_EXPLOSION_2;
+					plant_draw(s, y);
+					break;
+				case PT_EXPLOSION_2:
+					p->type = PT_EXPLOSION_3;
+					plant_draw(s, y);
 					break;
 			}
 		}

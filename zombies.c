@@ -48,6 +48,17 @@ void zombies_set_msbx(char mask, char val)
 	}
 }
 
+void zombies_splash(char x, char y, char w, char damage)
+{
+	char s = zombies_first[y];
+	while (s != 0xff)
+	{
+		if (zombies[s].x < x + w && zombies[s].x + w >= x)
+			zombies[s].live -= damage;
+		s = zombies[s].next;
+	}
+}
+
 void zombies_advance(char y)
 {
 	char msbx = 0;
@@ -63,44 +74,70 @@ void zombies_advance(char y)
 
 		char px = (zombies[s].x - 8) >> 4;
 
-		if (zombies[s].frozen)
-			zombies[s].frozen--;
-		else if (px < 9 && plant_grid[y][px].type != PT_NONE)
-		{
-			zombies[s].phase++;
-			if (zombies[s].phase >= 10)
-			{
-				zombies[s].phase = 6;
-				plant_grid[y][px].live--;
-				if (plant_grid[y][px].live == 0)
-				{
-					plant_remove(px, y);
-					plant_draw(px, y);
-				}
-			}
-		}
-		else
-		{
-			zombies[s].x --;
-			zombies[s].phase++;
-			if (zombies[s].phase >= 6)
-				zombies[s].phase = 0;
-		}
-
 		if (zombies[s].live <= 0)
 		{
 			switch (zombies[s].type)
 			{
-				case ZT_BASE:
+				case ZOMBIE_BASE:
+					zombies[s].type = ZOMBIE_CORPSE;
+					zombies[s].phase = 0;
 					break;
-				case ZT_HEAD:
-					zombies[s].type = ZT_BASE;
+				case ZOMBIE_CONE:
+					zombies[s].type = ZOMBIE_BASE;
 					zombies[s].live += 5;
+					break;
+				case ZOMBIE_CORPSE:
+					zombies[s].phase++;
+					if (zombies[s].phase == 4)
+						zombies[s].type = ZOMBIE_NONE;
 					break;
 			}
 		}
 
-		if (zombies[s].live > 0 && zombies[s].x > 0)
+		if (zombies[s].type >= ZOMBIE_BASE)
+		{
+			if (zombies[s].frozen)
+				zombies[s].frozen--;
+			else if (px < 9 && plant_grid[y][px].type != PT_NONE)
+			{
+				zombies[s].phase++;
+				if (zombies[s].phase >= 10)
+				{
+					zombies[s].phase = 6;
+					plant_grid[y][px].live--;
+					if (plant_grid[y][px].live == 0)
+					{
+						plant_remove(px, y);
+						plant_draw(px, y);
+					}
+				}
+			}
+			else
+			{
+				zombies[s].x --;
+				zombies[s].phase++;
+				if (zombies[s].phase >= 6)
+					zombies[s].phase = 0;
+			}
+
+			if (px < 9 && plant_grid[y][px].type == PT_CHOMPER)
+			{
+				zombies[s].type = ZOMBIE_NONE;
+				plant_grid[y][px].type = PT_CHOMPER_EAT;
+				plant_grid[y][px].cool = 150;
+				plant_draw(px, y);	
+			}
+			else if (px > 0 && plant_grid[y][px - 1].type == PT_CHOMPER)
+			{
+				zombies[s].type = ZOMBIE_NONE;
+				plant_grid[y][px - 1].type = PT_CHOMPER_EAT;
+				plant_grid[y][px - 1].cool = 150;
+				plant_draw(px - 1, y);	
+			}
+
+		}
+
+		if (zombies[s].type != ZOMBIE_NONE && zombies[s].x > 0)
 		{
 			if (zombies[s].x < left)
 				left = zombies[s].x;
@@ -108,7 +145,21 @@ void zombies_advance(char y)
 				right = zombies[s].x;
 
 			unsigned	x = zombies[s].x << 1;
-			char		img = zombies[s].phase + 16 + 16 * zombies[s].type;
+			char		img = zombies[s].phase;
+
+			switch (zombies[s].type)
+			{
+				case ZOMBIE_CORPSE:
+			 		img += 26;
+			 		break;
+			 	case ZOMBIE_BASE:
+			 		img += 16;
+			 		break;
+			 	case ZOMBIE_CONE:
+			 		img += 32;
+			 		break;
+			}
+
 			char		color = zombies[s].frozen ? VCOL_LT_BLUE : VCOL_MED_GREY;
 
 			rirq_data(zombieMux[y], 1 * ZOMBIE_SPRITES + nz, x & 0xff);

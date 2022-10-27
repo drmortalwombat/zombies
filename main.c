@@ -10,6 +10,7 @@
 #include "display.h"
 #include "plants.h"
 #include "zombies.h"
+#include "levels.h"
 
 signed char cursorX, cursorY, menuX;
 unsigned	sun_count;
@@ -47,6 +48,7 @@ void cursor_move(signed char dx, signed char dy)
 	if (cursorY < 0)
 	{
 		rirq_data(&menuMux, 1, x);
+		rirq_data(&menuMux, 2, (x & 0x100) != 0 ? 0x40 : 0x00);
 		rirq_data(&cursorMux, 3, 16 + 110);
 	}
 	else
@@ -68,6 +70,7 @@ void menu_set(char m)
 		menuX = m;
 		unsigned	x = 24 + m * 32;
 		rirq_data(&menuMux, 1, x);
+		rirq_data(&menuMux, 2, (x & 0x100) != 0 ? 0x40 : 0x00);
 	}
 }
 
@@ -111,9 +114,13 @@ int main(void)
 	menu_add_item(PT_WALLNUT, 50, 6);
 	menu_add_item(PT_POTATOMINE, 25, 6);
 	menu_add_item(PT_REPEATER, 200, 17);
+	menu_add_item(PT_CHERRYBOMB, 150, 3);
+	menu_add_item(PT_CHOMPER, 150, 17);
 	menu_add_item(PT_SHOVEL, 0, 17);
 	menu_set(1);
 	cursor_move(0, 0);
+
+	level_start(&TestLevel);
 
 	char	row = 0, warm = 0;
 	sun_count	= 500;
@@ -128,6 +135,7 @@ int main(void)
 		if (row == 5)
 		{
 			row = 0;
+			level_iterate();
 		}
 
 		warm++;
@@ -147,9 +155,6 @@ int main(void)
 			sun_add(8, 50, 200, 50);
 			sun_count = 500;
 		}
-
-		if (!(rand() & 255))
-			zombies_add(172, rand() % 5, rand() & 1);
 
 		keyb_poll();
 		switch (keyb_key)

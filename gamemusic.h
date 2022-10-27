@@ -8,9 +8,12 @@
 
 enum Tune
 {
-	TUNE_TITLE,
 	TUNE_GAME_1,
 	TUNE_GAME_2,
+	TUNE_GAME_3,
+	TUNE_TITLE,
+	TUNE_SEEDS,
+	TUNE_GAME_4, // NIGHT
 };
 
 void music_init(Tune tune);

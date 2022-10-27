@@ -8,9 +8,9 @@ const char SpriteData[] = {
 
 __interrupt void music_irq(void)
 {
-	vic.color_border++;
+//	vic.color_border++;
 	music_play();
-	vic.color_border--;
+//	vic.color_border--;
 }
 
 
@@ -38,7 +38,7 @@ void display_init(void)
 	memset(Screen, 0, 1000);
 	memset(Color, 0, 1000);
 
-	music_init(0);
+	music_init(TUNE_GAME_4);
 
 	rirq_init_kernal();
 
