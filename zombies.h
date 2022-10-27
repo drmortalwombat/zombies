@@ -5,7 +5,7 @@ enum ZombieType
 {
 	ZOMBIE_NONE,
 	ZOMBIE_CORPSE,
-	
+
 	ZOMBIE_BASE,
 	ZOMBIE_CONE,
 };
@@ -19,7 +19,7 @@ struct Zombie
 	signed char	live;
 	char		frozen;
 	ZombieType	type;
-	char		pad0;
+	char		delay;
 };
 
 extern Zombie	zombies[32];

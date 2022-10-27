@@ -12,6 +12,9 @@
 #include "zombies.h"
 #include "levels.h"
 
+#pragma region( main, 0x0a00, 0x9800, , , {code, data, bss, heap, stack} )
+#pragma stacksize(1024)
+
 signed char cursorX, cursorY, menuX;
 unsigned	sun_count;
 
@@ -78,49 +81,20 @@ int main(void)
 {
 	display_init();
 
-	plant_grid_clear();
 	shots_init();
 	zombies_init();
 
-	for(char y=0; y<5; y++)
-	{
-		for(char x=0; x<10; x++)
-		{
-//			char r = rand() & 31;
-//			if (x < 6 && r < 8)
-//				plant_place(x, y, PT_PEASHOOTER);
-			plant_draw(x, y);
-		}
-	}
-
-#if 0
-	for(int i=0; i<5; i++)
-	{
-		for(int j=0; j<3; j++)
-		{
-			zombies_add(j * 32 + 300, i);
-		}
-	}
-#endif
-
-	cusor_show(0, 0);
 
 
-	menu_init();
-	menu_add_item(PT_SUN, 400, 0);
-	menu_add_item(PT_SUNFLOWER, 50, 17);
-	menu_add_item(PT_PEASHOOTER, 100, 17);
-	menu_add_item(PT_SNOWPEA, 175, 17);
-	menu_add_item(PT_WALLNUT, 50, 6);
-	menu_add_item(PT_POTATOMINE, 25, 6);
-	menu_add_item(PT_REPEATER, 200, 17);
-	menu_add_item(PT_CHERRYBOMB, 150, 3);
-	menu_add_item(PT_CHOMPER, 150, 17);
-	menu_add_item(PT_SHOVEL, 0, 17);
+	level_start(&TestLevel3);
+
 	menu_set(1);
+	cusor_show(0, 0);
 	cursor_move(0, 0);
 
-	level_start(&TestLevel);
+	for(char y=0; y<5; y++)
+		for(char x=0; x<10; x++)
+			plant_draw(x, y);
 
 	char	row = 0, warm = 0;
 	sun_count	= 500;

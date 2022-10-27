@@ -24,7 +24,17 @@ void zombies_add(char x, char y, ZombieType type)
 		zombies[s].x = x;
 		zombies[s].y = y;
 		zombies[s].phase = 0;
-		zombies[s].live = 5;
+		zombies[s].delay = 0;		
+
+		switch (type)
+		{
+			case ZOMBIE_BASE:
+				zombies[s].live = 20;
+				break;
+			case ZOMBIE_CONE:
+				zombies[s].live = 44;
+				break;
+		}
 		zombies[s].frozen = 0;
 		zombies[s].type = type;
 
@@ -84,7 +94,7 @@ void zombies_advance(char y)
 					break;
 				case ZOMBIE_CONE:
 					zombies[s].type = ZOMBIE_BASE;
-					zombies[s].live += 5;
+					zombies[s].live += 20;
 					break;
 				case ZOMBIE_CORPSE:
 					zombies[s].phase++;
@@ -114,10 +124,16 @@ void zombies_advance(char y)
 			}
 			else
 			{
-				zombies[s].x --;
-				zombies[s].phase++;
-				if (zombies[s].phase >= 6)
-					zombies[s].phase = 0;
+				unsigned	d = zombies[s].delay + 69;
+				zombies[s].delay = d;
+				
+				if (d & 0x0100)
+				{
+					zombies[s].x --;
+					zombies[s].phase++;
+					if (zombies[s].phase >= 6)
+						zombies[s].phase = 0;
+				}
 			}
 
 			if (px < 9 && plant_grid[y][px].type == PT_CHOMPER)
@@ -150,13 +166,13 @@ void zombies_advance(char y)
 			switch (zombies[s].type)
 			{
 				case ZOMBIE_CORPSE:
-			 		img += 26;
+			 		img += 100 + 16;
 			 		break;
 			 	case ZOMBIE_BASE:
-			 		img += 16;
+			 		img += 0 + 16;
 			 		break;
 			 	case ZOMBIE_CONE:
-			 		img += 32;
+			 		img += 10 + 16;
 			 		break;
 			}
 

@@ -4,12 +4,12 @@
 
 #pragma section( music, 0)
 
-#pragma region( music, 0xa000, 0xc000, , , {music} )
+#pragma region( music, 0x9800, 0xc000, , , {music} )
 
 #pragma data(music)
 
 __export char music[] = {
-	#embed 0x2000 0x88 "zombies.sid" 
+	#embed 0x2800 0x88 "zombies.sid" 
 };
 
 #pragma data(data)
@@ -21,7 +21,7 @@ void music_init(Tune tune)
 	__asm
 	{
 		lda		tune
-		jsr		$a000
+		jsr		$9800
 	}
 }
 
@@ -44,7 +44,7 @@ void music_play(void)
 #endif
 	__asm
 	{
-		jsr		$a003
+		jsr		$9803
 	}
 }
 

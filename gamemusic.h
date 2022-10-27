@@ -14,6 +14,8 @@ enum Tune
 	TUNE_TITLE,
 	TUNE_SEEDS,
 	TUNE_GAME_4, // NIGHT
+	TUNE_GAME_5, // NIGHT
+	TUNE_VICTORY,
 };
 
 void music_init(Tune tune);

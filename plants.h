@@ -6,6 +6,8 @@
 enum PlantType
 {
 	PT_NONE,
+	PT_GROUND,
+
 	PT_PEASHOOTER,
 	PT_SUNFLOWER,
 	PT_WALLNUT,
@@ -88,7 +90,7 @@ void menu_cooldown(char x);
 
 void menu_warmup(void);
 
-void menu_add_item(PlantType type, unsigned price, char warm);
+void menu_add_item(PlantType type, unsigned price, char warm, bool ready);
 
 // x and y in plant coords
 void plant_draw(char x, char y);
@@ -96,7 +98,7 @@ void plant_draw(char x, char y);
 // x and y in screen coords
 void plant_draw_field(char x, char y);
 
-void plant_grid_clear(void);
+void plant_grid_clear(char rows);
 
 void plant_place(char x, char y, PlantType p);
 
