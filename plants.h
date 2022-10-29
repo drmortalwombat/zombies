@@ -32,6 +32,9 @@ enum PlantType
 	PT_CHOMPER,
 	PT_CHOMPER_EAT,
 
+	PT_PEASHOOTER_NIGHT,
+	PT_FLOORSPACE,
+
 	NUM_PLANT_TYPES
 };
 
@@ -97,6 +100,8 @@ void plant_draw(char x, char y);
 
 // x and y in screen coords
 void plant_draw_field(char x, char y);
+
+void plant_draw_borders(void);
 
 void plant_grid_clear(char rows);
 

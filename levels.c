@@ -5,11 +5,28 @@ const Level	*	level;
 char			level_cmd;
 unsigned		level_delay;
 
+char			level_rows[32];
+
+
 void level_start(const Level * l)
 {
 	level = l;
 	level_cmd = 0;
 	level_delay = 0;
+
+	char row = 0;
+	for(char i=0; i<32; i++)
+	{		
+		do
+		{
+			row++;
+			if (row == 5)
+				row = 0;
+		}
+		while (!(l->rows & (1 << row)));
+
+		level_rows[i] = row;
+	}
 
 	menu_init();
 	menu_add_item(PT_SUN, l->sun, 0, true);
@@ -43,12 +60,14 @@ void level_iterate(void)
 		level_delay--;
 	else
 	{
-		char row;
-
-		do
+		char 	i = rand() & 15;
+		char	row = level_rows[i];
+		while (i < 31)
 		{
-		 	row = rand() & 7;
-		} while (!(level->rows & (1 << row)));
+			level_rows[i] = level_rows[i + 1];
+			i++;
+		}
+		level_rows[31] = row;
 
 		switch (level->cmds[level_cmd])
 		{
@@ -108,6 +127,11 @@ void level_iterate(void)
 
 			case LVC_ZOMBIE_CONE:
 				zombies_add(172, row, ZOMBIE_CONE);
+				level_cmd++;				
+				break;			
+
+			case LVC_ZOMBIE_POLE:
+				zombies_add(172, row, ZOMBIE_POLE);
 				level_cmd++;				
 				break;			
 		}

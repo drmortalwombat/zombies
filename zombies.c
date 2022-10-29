@@ -22,9 +22,9 @@ void zombies_add(char x, char y, ZombieType type)
 		char	s = zombies_free;
 		zombies_free = zombies[s].next;
 		zombies[s].x = x;
-		zombies[s].y = y;
 		zombies[s].phase = 0;
 		zombies[s].delay = 0;		
+		zombies[s].speed = 60 + (rand() & 15);
 
 		switch (type)
 		{
@@ -33,6 +33,10 @@ void zombies_add(char x, char y, ZombieType type)
 				break;
 			case ZOMBIE_CONE:
 				zombies[s].live = 44;
+				break;
+			case ZOMBIE_POLE:
+				zombies[s].live = 50;
+				zombies[s].speed *= 2;
 				break;
 		}
 		zombies[s].frozen = 0;
@@ -82,12 +86,14 @@ void zombies_advance(char y)
 	{
 		char n = zombies[s].next;
 
-		char px = (zombies[s].x - 8) >> 4;
+		char px = (zombies[s].x - 16) >> 4;
 
 		if (zombies[s].live <= 0)
 		{
 			switch (zombies[s].type)
 			{
+				case ZOMBIE_POLE:
+				case ZOMBIE_VAULT:
 				case ZOMBIE_BASE:
 					zombies[s].type = ZOMBIE_CORPSE;
 					zombies[s].phase = 0;
@@ -108,23 +114,47 @@ void zombies_advance(char y)
 		{
 			if (zombies[s].frozen)
 				zombies[s].frozen--;
+			else if (zombies[s].type == ZOMBIE_VAULT)
+			{
+				unsigned	d = zombies[s].delay + 64;
+				zombies[s].delay = d;
+				zombies[s].x --;
+				
+				if (d & 0x0100)
+				{
+					zombies[s].phase++;
+					if (zombies[s].phase >= 4)
+					{
+						zombies[s].type = ZOMBIE_BASE;						
+					}
+				}
+			}
 			else if (px < 9 && plant_grid[y][px].type != PT_NONE)
 			{
-				zombies[s].phase++;
-				if (zombies[s].phase >= 10)
+				if (zombies[s].type == ZOMBIE_POLE)
 				{
-					zombies[s].phase = 6;
-					plant_grid[y][px].live--;
-					if (plant_grid[y][px].live == 0)
+					zombies[s].type = ZOMBIE_VAULT;
+					zombies[s].phase = 0;
+					zombies[s].delay = 0;
+				}
+				else
+				{
+					zombies[s].phase++;
+					if (zombies[s].phase >= 10)
 					{
-						plant_remove(px, y);
-						plant_draw(px, y);
+						zombies[s].phase = 6;
+						plant_grid[y][px].live--;
+						if (plant_grid[y][px].live == 0)
+						{
+							plant_remove(px, y);
+							plant_draw(px, y);
+						}
 					}
 				}
 			}
 			else
 			{
-				unsigned	d = zombies[s].delay + 69;
+				unsigned	d = zombies[s].delay + zombies[s].speed;
 				zombies[s].delay = d;
 				
 				if (d & 0x0100)
@@ -173,6 +203,12 @@ void zombies_advance(char y)
 			 		break;
 			 	case ZOMBIE_CONE:
 			 		img += 10 + 16;
+			 		break;
+			 	case ZOMBIE_POLE:
+			 		img += 20 + 16;
+			 		break;
+			 	case ZOMBIE_VAULT:
+			 		img += 26 + 16;
 			 		break;
 			}
 

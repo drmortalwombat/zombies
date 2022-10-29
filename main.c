@@ -46,10 +46,10 @@ void cursor_move(signed char dx, signed char dy)
 			cursorX = 8;
 	}
 
-	unsigned	x = 24 + cursorX * 32;
 	
 	if (cursorY < 0)
 	{
+		unsigned	x = 24 + cursorX * 32;
 		rirq_data(&menuMux, 1, x);
 		rirq_data(&menuMux, 2, (x & 0x100) != 0 ? 0x40 : 0x00);
 		rirq_data(&cursorMux, 3, 16 + 110);
@@ -57,6 +57,7 @@ void cursor_move(signed char dx, signed char dy)
 	else
 	{
 		char		y = 50 + 8 * 5 + cursorY * 32;
+		unsigned	x = 40 + cursorX * 32;
 
 		rirq_data(&cursorMux, 0, y);
 		rirq_data(&cursorMux, 1, x);
@@ -86,14 +87,15 @@ int main(void)
 
 
 
-	level_start(&TestLevel3);
+	level_start(&TestLevel5);
 
 	menu_set(1);
 	cusor_show(0, 0);
 	cursor_move(0, 0);
 
+	plant_draw_borders();
 	for(char y=0; y<5; y++)
-		for(char x=0; x<10; x++)
+		for(char x=0; x<9; x++)
 			plant_draw(x, y);
 
 	char	row = 0, warm = 0;
@@ -126,7 +128,7 @@ int main(void)
 			sun_count--;
 		else if (!sun_active)
 		{
-			sun_add(8, 50, 200, 50);
+			sun_add(8, 50, 200, 25);
 			sun_count = 500;
 		}
 

@@ -8,11 +8,12 @@ enum ZombieType
 
 	ZOMBIE_BASE,
 	ZOMBIE_CONE,
+	ZOMBIE_POLE,
+	ZOMBIE_VAULT
 };
 
 struct Zombie
 {
-	char		y;
 	char		x;
 	char		phase;
 	char		next;
@@ -20,6 +21,7 @@ struct Zombie
 	char		frozen;
 	ZombieType	type;
 	char		delay;
+	char		speed;
 };
 
 extern Zombie	zombies[32];

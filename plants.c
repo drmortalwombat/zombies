@@ -364,12 +364,47 @@ void sun_add(char x, char y, char vy, char power)
 	sun_power = power;
 }
 
+void plant_draw_borders(void)
+{
+	for(char y=0; y<5; y++)
+	{
+		char * hdp = Hires + 5 * 320 + 320 * 4 * y;
+		const char * sdp = PlantsHiresData + 8 * 16 * PT_FLOORSPACE;
+
+		for(char i=0; i<4; i++)
+		{
+			for(char j=0; j<8*2; j++)
+				hdp[j] = sdp[j + 16];
+			for(char j=0; j<8*2; j++)
+				hdp[j + 304] = sdp[j];
+			hdp += 320;
+			sdp += 8 * 4;
+		}
+
+		char * cdp = Color + 5 * 40  + 40 * 4 * y;
+		hdp = Screen + 5 * 40 + 40 * 4 * y;
+
+		for(char i=0; i<4; i++)
+		{
+			#pragma unroll(full)
+			for(char j=0; j<2; j++)
+			{
+				cdp[j] = PlantsColor0Data[16 * PT_FLOORSPACE + 4 * i + j + 2];
+				hdp[j] = PlantsColor1Data[16 * PT_FLOORSPACE + 4 * i + j + 2];
+				cdp[j + 38] = PlantsColor0Data[16 * PT_FLOORSPACE + 4 * i + j];
+				hdp[j + 38] = PlantsColor1Data[16 * PT_FLOORSPACE + 4 * i + j];
+			}
+			cdp += 40;
+			hdp += 40;
+		}
+	}
+}
 
 void plant_draw(char x, char y)
 {
 	PlantType	p = plant_grid[y][x].type;
 
-	char * hdp = Hires + 5 * 320 + 32 * x + 320 * 4 * y;
+	char * hdp = Hires + 16 + 5 * 320 + 32 * x + 320 * 4 * y;
 	const char * sdp = PlantsHiresData + 8 * 16 * p;
 
 	for(char i=0; i<4; i++)
@@ -380,8 +415,8 @@ void plant_draw(char x, char y)
 		sdp += 8 * 4;
 	}
 
-	char * cdp = Color + 5 * 40 + 4 * x + 40 * 4 * y;
-	hdp = Screen + 5 * 40 + 4 * x + 40 * 4 * y;
+	char * cdp = Color + 2 + 5 * 40 + 4 * x + 40 * 4 * y;
+	hdp = Screen + 2 + 5 * 40 + 4 * x + 40 * 4 * y;
 
 	for(char i=0; i<4; i++)
 	{
@@ -402,11 +437,9 @@ void plant_draw_field(char x, char y)
 	__assume(y < 20);
 	__assume(x < 40);
 
-	char * dp = HiresTab[y + 5] + x * 8;
-//	char * dp = Hires + 320 * (y + 5) + x * 8;
-	char * cp = ColorTab[y + 5] + x;
-//	char * cp = Color + 40 * (y + 5) + x;
-	PlantType p = plant_grid[y >> 2][x >> 2].type;
+	char * dp = HiresTab[y + 5] + x * 8 + 16;
+	char * cp = ColorTab[y + 5] + x + 2;
+	PlantType p = x >= 36 ? PT_FLOORSPACE : plant_grid[y >> 2][x >> 2].type;
 
 	const char * sp = PlantsHiresData + 8 * 16 * p + 32 * (y & 3) + 8 * (x & 3);
 
@@ -428,10 +461,8 @@ void shot_draw(char x, char y, char c)
 {
 	__assume(y < 20);
 
-	char * dp = HiresTab[y + 5] + (x & 0xfc) * 2 + 2;
-//	char * dp = Hires + 320 * (y + 5) + (x & 0xfc) * 2 + 2;
-	char * cp = ColorTab[y + 5] + (x >> 2);
-//	char * cp = Color + 40 * (y + 5) + (x >> 2);
+	char * dp = HiresTab[y + 5] + (x & 0xfc) * 2 + 16 + 2;
+	char * cp = ColorTab[y + 5] + (x >> 2) + 2;
 
 	switch(x & 3)
 	{
@@ -504,11 +535,11 @@ void shots_advance(void)
 		char n = shots[s].next;
 		shots[s].x++;
 		char y = shots[s].y >> 2;
-		char x = shots[s].x + 12;
+		char x = shots[s].x + 20;
 
 		bool	keep = true;
 
-		if (shots[s].x > 152)
+		if (shots[s].x > 144)
 			keep = false;
 		else if (zombies_left[y] <= x)
 		{
@@ -614,7 +645,7 @@ void plants_iterate(char y)
 					char x = s * 16;
 					while (z != 0xff)
 					{
-						if (zombies[z].x <= x + 24 && zombies[z].x + 8 > x && zombies[z].live > 0)
+						if (zombies[z].x <= x + 32 && zombies[z].x + 16 > x && zombies[z].live > 0)
 						{
 							zombies[z].live -= 80;
 							p->type = PT_POTATOMINE_EXPLODED;
@@ -642,11 +673,11 @@ void plants_iterate(char y)
 					break;
 
 				case PT_CHERRYBOMB:
-					zombies_splash(s * 16 + 20, y, 16, 80);
+					zombies_splash(s * 16 + 28, y, 16, 80);
 					if (y > 0)
-						zombies_splash(s * 16 + 20, y - 1, 16, 80);
+						zombies_splash(s * 16 + 28, y - 1, 16, 80);
 					if (y < 4)
-						zombies_splash(s * 16 + 20, y + 1, 16, 80);
+						zombies_splash(s * 16 + 28, y + 1, 16, 80);
 					p->type = PT_EXPLOSION_0;
 					plant_draw(s, y);
 					break;					
