@@ -9,7 +9,8 @@ enum ZombieType
 	ZOMBIE_BASE,
 	ZOMBIE_CONE,
 	ZOMBIE_POLE,
-	ZOMBIE_VAULT
+	ZOMBIE_VAULT,
+	ZOMBIE_BUCKET
 };
 
 struct Zombie

@@ -38,7 +38,7 @@ void display_init(void)
 	memset(Screen, 0, 1000);
 	memset(Color, 0, 1000);
 
-	music_init(TUNE_GAME_5);
+	music_init(TUNE_GAME_6);
 
 	rirq_init_kernal();
 

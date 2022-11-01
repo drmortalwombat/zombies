@@ -34,6 +34,9 @@ void zombies_add(char x, char y, ZombieType type)
 			case ZOMBIE_CONE:
 				zombies[s].live = 44;
 				break;
+			case ZOMBIE_BUCKET:
+				zombies[s].live = 117;
+				break;			
 			case ZOMBIE_POLE:
 				zombies[s].live = 50;
 				zombies[s].speed *= 2;
@@ -99,6 +102,7 @@ void zombies_advance(char y)
 					zombies[s].phase = 0;
 					break;
 				case ZOMBIE_CONE:
+				case ZOMBIE_BUCKET:
 					zombies[s].type = ZOMBIE_BASE;
 					zombies[s].live += 20;
 					break;
@@ -209,6 +213,9 @@ void zombies_advance(char y)
 			 		break;
 			 	case ZOMBIE_VAULT:
 			 		img += 26 + 16;
+			 		break;
+			 	case ZOMBIE_BUCKET:
+			 		img += 30 + 16;
 			 		break;
 			}
 

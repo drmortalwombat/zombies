@@ -20,6 +20,8 @@ const char DigitsHiresData[] = {
 };
 
 #pragma align(PlantsHiresData, 256)
+#pragma align(PlantsColor0Data, 256)
+#pragma align(PlantsColor1Data, 256)
 
 Plant	plant_grid[5][10];
 char	plant_first[5];

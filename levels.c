@@ -134,6 +134,11 @@ void level_iterate(void)
 				zombies_add(172, row, ZOMBIE_POLE);
 				level_cmd++;				
 				break;			
+
+			case LVC_ZOMBIE_BUCKET:
+				zombies_add(172, row, ZOMBIE_BUCKET);
+				level_cmd++;				
+				break;			
 		}
 	}
 }

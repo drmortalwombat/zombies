@@ -3,6 +3,7 @@
 #include <c64/rasterirq.h>
 #include <c64/memmap.h>
 #include <c64/keyboard.h>
+#include <c64/joystick.h>
 #include <oscar.h>
 #include <string.h>
 #include <stdlib.h>
@@ -78,6 +79,36 @@ void menu_set(char m)
 	}
 }
 
+void cursor_select(void)
+{
+	if (cursorY >= 0)
+	{
+		if (menu[menuX].type == PT_SHOVEL)
+		{
+			if (menu[menuX].cool == 0 && plant_grid[cursorY][cursorX].type != PT_NONE)
+			{
+				menu_cooldown(menuX);
+				plant_remove(cursorX, cursorY);
+				plant_draw(cursorX, cursorY);						
+			}
+		}
+		else
+		{
+			if (plant_grid[cursorY][cursorX].type == PT_NONE)
+			{
+				if (menu[menuX].cool == 0 && menu[menuX].price <= menu[0].price)
+				{
+					menu[0].price -= menu[menuX].price;
+					menu_cooldown(menuX);
+					menu_draw_price(0, menu[0].price);
+					plant_place(cursorX, cursorY, menu[menuX].type);
+					plant_draw(cursorX, cursorY);
+				}
+			}
+		}
+	}
+}
+
 int main(void)
 {
 	display_init();
@@ -87,7 +118,7 @@ int main(void)
 
 
 
-	level_start(&TestLevel5);
+	level_start(&TestLevel9);
 
 	menu_set(1);
 	cusor_show(0, 0);
@@ -100,6 +131,8 @@ int main(void)
 
 	char	row = 0, warm = 0;
 	sun_count	= 500;
+
+	char	joydown = 0;
 	for(;;)
 	{
 		char sirq = rirq_count;
@@ -175,33 +208,29 @@ int main(void)
 				menu_set(9);
 				break;
 			case KSCAN_SPACE | KSCAN_QUAL_DOWN:
-				if (cursorY >= 0)
-				{
-					if (menu[menuX].type == PT_SHOVEL)
-					{
-						if (menu[menuX].cool == 0 && plant_grid[cursorY][cursorX].type != PT_NONE)
-						{
-							menu_cooldown(menuX);
-							plant_remove(cursorX, cursorY);
-							plant_draw(cursorX, cursorY);						
-						}
-					}
-					else
-					{
-						if (plant_grid[cursorY][cursorX].type == PT_NONE)
-						{
-							if (menu[menuX].cool == 0 && menu[menuX].price <= menu[0].price)
-							{
-								menu[0].price -= menu[menuX].price;
-								menu_cooldown(menuX);
-								menu_draw_price(0, menu[0].price);
-								plant_place(cursorX, cursorY, menu[menuX].type);
-								plant_draw(cursorX, cursorY);
-							}
-						}
-					}
-				}
+				cursor_select();
 				break;
+		}
+
+		joy_poll(0);
+		if (joydown)
+		{
+			joydown--;
+			if (!joyx[0] && !joyy[0] && !joyb[0])
+				joydown = 0;
+		}
+		else
+		{
+			if (joyx[0] || joyy[0])
+			{
+				cursor_move(joyx[0], joyy[0]);
+				joydown = 20;
+			}
+			if (joyb[0])
+			{
+				cursor_select();			
+				joydown = 20;
+			}
 		}
 
 		while (sirq == rirq_count)
