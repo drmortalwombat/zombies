@@ -24,7 +24,7 @@ void zombies_add(char x, char y, ZombieType type)
 		zombies[s].x = x;
 		zombies[s].phase = 0;
 		zombies[s].delay = 0;		
-		zombies[s].speed = 60 + (rand() & 15);
+		zombies[s].speed = 112 + (rand() & 15);
 
 		switch (type)
 		{

@@ -70,12 +70,12 @@ void plant_place(char x, char y, PlantType p)
 	switch (p)
 	{
 		case PT_SUNFLOWER:
-			pp->cool = 40;
+			pp->cool = 20;
 			pp->live = 5;
 			break;
 		case PT_PEASHOOTER:
 		case PT_REPEATER:
-			pp->cool = 5;
+			pp->cool = 3;
 			pp->live = 5;
 			break;
 		case PT_WALLNUT:
@@ -84,11 +84,11 @@ void plant_place(char x, char y, PlantType p)
 			break;
 		case PT_POTATOMINE:
 			pp->type = PT_POTATOMINE_HIDDEN;
-			pp->cool = 64;
+			pp->cool = 32;
 			pp->live = 5;
 			break;
 		case PT_CHERRYBOMB:
-			pp->cool = 5;
+			pp->cool = 3;
 			pp->live = 20;
 			break;
 	}
@@ -527,7 +527,7 @@ void shots_add(char x, char y, ShotType type)
 
 const char shot_colors[2] = {VCOL_YELLOW, VCOL_LT_BLUE};
 
-void shots_advance(void)
+void shots_advance(char step)
 {
 	char	p = 0xff;
 	char	s = shots_first;
@@ -535,7 +535,7 @@ void shots_advance(void)
 	{
 		shot_clear(shots[s].x, shots[s].y);
 		char n = shots[s].next;
-		shots[s].x++;
+		shots[s].x += step;
 		char y = shots[s].y >> 2;
 		char x = shots[s].x + 20;
 
@@ -551,7 +551,7 @@ void shots_advance(void)
 				if (zombies[z].x <= x && zombies[z].x > x - 10 && zombies[z].live > 0)
 				{
 					if (shots[s].type == ST_FROST)
-						zombies[z].frozen = 5;
+						zombies[z].frozen = 3;
 					zombies[z].live -= 2;
 					keep = false;
 					break;
@@ -600,7 +600,7 @@ void plants_iterate(char y)
 				case PT_PEASHOOTER:
 					if (s < right)
 					{
-						p->cool = 15;
+						p->cool = 7;
 						shots_add(16 * s + 12, 4 * y + 1, ST_PEA);
 					}
 					break;
@@ -608,7 +608,7 @@ void plants_iterate(char y)
 				case PT_REPEATER:
 					if (s < right)
 					{
-						p->cool = 15;
+						p->cool = 7;
 						shots_add(16 * s + 16, 4 * y + 1, ST_PEA);
 						shots_add(16 * s + 8, 4 * y + 1, ST_PEA);
 					}
@@ -617,13 +617,13 @@ void plants_iterate(char y)
 				case PT_SNOWPEA:
 					if (s < right)
 					{
-						p->cool = 15;
+						p->cool = 7;
 						shots_add(16 * s + 12, 4 * y + 1, ST_FROST);
 					}
 					break;
 
 				case PT_POTATOMINE_HIDDEN:
-					p->cool = 8;
+					p->cool = 4;
 					p->type = PT_POTATOMINE;
 					plant_draw(s, y);
 					break;
@@ -641,7 +641,7 @@ void plants_iterate(char y)
 					break;
 
 				case PT_POTATOMINE:
-					p->cool = 8;
+					p->cool = 4;
 
 					char z = zombies_first[y];
 					char x = s * 16;
@@ -651,7 +651,7 @@ void plants_iterate(char y)
 						{
 							zombies[z].live -= 80;
 							p->type = PT_POTATOMINE_EXPLODED;
-							p->cool = 16;
+							p->cool = 8;
 						}
 						z = zombies[z].next;
 					}
@@ -664,7 +664,7 @@ void plants_iterate(char y)
 				case PT_SUNFLOWER:
 					if (!sun_active)
 					{
-						p->cool = 128 + (rand() & 127);
+						p->cool = 64 + (rand() & 63);
 						sun_add(s, 50 + 8 * 5 + 32 * y, 0, 25);					
 					}
 					break;

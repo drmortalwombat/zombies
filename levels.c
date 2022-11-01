@@ -75,48 +75,44 @@ void level_iterate(void)
 				level_cmd++;
 				break;
 
-			case LVC_DELAY_5F:
+			case LVC_DELAY_10F:
 				level_delay = 1;
 				level_cmd++;
 				break;
-			case LVC_DELAY_10F:
+			case LVC_DELAY_20F:
 				level_delay = 2;
 				level_cmd++;
 				break;
-			case LVC_DELAY_20F:
-				level_delay = 4;
-				level_cmd++;
-				break;
 			case LVC_DELAY_1S:
-				level_delay = 10;
+				level_delay = 5;
 				level_cmd++;
 				break;
 			case LVC_DELAY_2S:
-				level_delay = 20;
+				level_delay = 4;
 				level_cmd++;
 				break;
 			case LVC_DELAY_5S:
-				level_delay = 50;
+				level_delay = 25;
 				level_cmd++;
 				break;
 			case LVC_DELAY_10S:
-				level_delay = 100;
+				level_delay = 50;
 				level_cmd++;
 				break;
 			case LVC_DELAY_15S:
-				level_delay = 150;
+				level_delay = 75;
 				level_cmd++;
 				break;
 			case LVC_DELAY_20S:
-				level_delay = 200;
+				level_delay = 100;
 				level_cmd++;
 				break;
 			case LVC_DELAY_30S:
-				level_delay = 300;
+				level_delay = 150;
 				level_cmd++;
 				break;
 			case LVC_DELAY_60S:
-				level_delay = 600;
+				level_delay = 300;
 				level_cmd++;
 				break;
 

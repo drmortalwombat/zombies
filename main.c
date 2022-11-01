@@ -133,15 +133,18 @@ int main(void)
 	sun_count	= 500;
 
 	char	joydown = 0;
+	char	step = 1;
 	for(;;)
 	{
 		char sirq = rirq_count;
 
-		zombies_advance(row);
-		plants_iterate(row);
+		if (row & 1)
+			zombies_advance(row >> 1);
+		else
+			plants_iterate(row >> 1);
 
 		row++;
-		if (row == 5)
+		if (row == 10)
 		{
 			row = 0;
 			level_iterate();
@@ -154,7 +157,7 @@ int main(void)
 			menu_warmup();
 		}
 
-		shots_advance();
+		shots_advance(step);
 		sun_advance();
 
 		if (sun_count > 0)
@@ -235,6 +238,8 @@ int main(void)
 
 		while (sirq == rirq_count)
 			;
+
+		step = rirq_count - sirq;
 	}
 
 

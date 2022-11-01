@@ -113,7 +113,7 @@ void shots_init(void);
 
 void shots_add(char x, char y, ShotType type);
 
-void shots_advance(void);
+void shots_advance(char step);
 
 void plants_iterate(char y);
 
