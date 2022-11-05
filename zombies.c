@@ -120,9 +120,9 @@ void zombies_advance(char y)
 				zombies[s].frozen--;
 			else if (zombies[s].type == ZOMBIE_VAULT)
 			{
-				unsigned	d = zombies[s].delay + 64;
+				unsigned	d = zombies[s].delay + 128;
 				zombies[s].delay = d;
-				zombies[s].x --;
+				zombies[s].x -= 2;
 				
 				if (d & 0x0100)
 				{
