@@ -170,21 +170,23 @@ void zombies_advance(char y)
 				}
 			}
 
-			if (px < 9 && plant_grid[y][px].type == PT_CHOMPER)
+			if (px < 9)
 			{
-				zombies[s].type = ZOMBIE_NONE;
-				plant_grid[y][px].type = PT_CHOMPER_EAT;
-				plant_grid[y][px].cool = 150;
-				plant_draw(px, y);	
+				if (plant_grid[y][px].type == PT_CHOMPER_0 || plant_grid[y][px].type == PT_CHOMPER_1)
+				{
+					zombies[s].type = ZOMBIE_NONE;
+					plant_grid[y][px].type = PT_CHOMPER_EAT_0;
+					plant_grid[y][px].cool = 150;
+					plant_draw(px, y);	
+				}
+				else if (px > 0 && (plant_grid[y][px - 1].type == PT_CHOMPER_0 || plant_grid[y][px - 1].type == PT_CHOMPER_1))
+				{
+					zombies[s].type = ZOMBIE_NONE;
+					plant_grid[y][px - 1].type = PT_CHOMPER_EAT_0;
+					plant_grid[y][px - 1].cool = 150;
+					plant_draw(px - 1, y);	
+				}
 			}
-			else if (px > 0 && plant_grid[y][px - 1].type == PT_CHOMPER)
-			{
-				zombies[s].type = ZOMBIE_NONE;
-				plant_grid[y][px - 1].type = PT_CHOMPER_EAT;
-				plant_grid[y][px - 1].cool = 150;
-				plant_draw(px - 1, y);	
-			}
-
 		}
 
 		if (zombies[s].type != ZOMBIE_NONE && zombies[s].x > 0)
@@ -194,40 +196,43 @@ void zombies_advance(char y)
 			if (zombies[s].x > right)
 				right = zombies[s].x;
 
-			unsigned	x = zombies[s].x << 1;
-			char		img = zombies[s].phase;
-
-			switch (zombies[s].type)
+			if (nz < ZOMBIE_SPRITES)
 			{
-				case ZOMBIE_CORPSE:
-			 		img += 100 + 16;
-			 		break;
-			 	case ZOMBIE_BASE:
-			 		img += 0 + 16;
-			 		break;
-			 	case ZOMBIE_CONE:
-			 		img += 10 + 16;
-			 		break;
-			 	case ZOMBIE_POLE:
-			 		img += 20 + 16;
-			 		break;
-			 	case ZOMBIE_VAULT:
-			 		img += 26 + 16;
-			 		break;
-			 	case ZOMBIE_BUCKET:
-			 		img += 30 + 16;
-			 		break;
+				unsigned	x = zombies[s].x << 1;
+				char		img = zombies[s].phase;
+
+				switch (zombies[s].type)
+				{
+					case ZOMBIE_CORPSE:
+				 		img += 100 + 16;
+				 		break;
+				 	case ZOMBIE_BASE:
+				 		img += 0 + 16;
+				 		break;
+				 	case ZOMBIE_CONE:
+				 		img += 10 + 16;
+				 		break;
+				 	case ZOMBIE_POLE:
+				 		img += 20 + 16;
+				 		break;
+				 	case ZOMBIE_VAULT:
+				 		img += 26 + 16;
+				 		break;
+				 	case ZOMBIE_BUCKET:
+				 		img += 30 + 16;
+				 		break;
+				}
+
+				char		color = zombies[s].frozen ? VCOL_LT_BLUE : VCOL_MED_GREY;
+
+				rirq_data(zombieMux[y], 1 * ZOMBIE_SPRITES + nz, x & 0xff);
+				rirq_data(zombieMux[y], 2 * ZOMBIE_SPRITES + nz, img);
+				rirq_data(zombieMux[y], 3 * ZOMBIE_SPRITES + nz, color);
+
+				if (x & 0x100)
+					msbx |= 1 << nz;
+				nz++;
 			}
-
-			char		color = zombies[s].frozen ? VCOL_LT_BLUE : VCOL_MED_GREY;
-
-			rirq_data(zombieMux[y], 1 * ZOMBIE_SPRITES + nz, x & 0xff);
-			rirq_data(zombieMux[y], 2 * ZOMBIE_SPRITES + nz, img);
-			rirq_data(zombieMux[y], 3 * ZOMBIE_SPRITES + nz, color);
-
-			if (x & 0x100)
-				msbx |= 1 << nz;
-			nz++;
 
 			p = s;
 		}
@@ -256,4 +261,13 @@ void zombies_advance(char y)
 
 	zombies_left[y] = left;
 	zombies_right[y] = right;
+}
+
+bool zombies_done(void)
+{
+	#pragma unroll(full)
+	for(char i=0; i<5; i++)
+		if (zombies_first[i] != 0xff)
+			return false;
+	return true;
 }

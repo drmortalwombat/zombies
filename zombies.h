@@ -41,6 +41,8 @@ void zombies_advance(char y);
 
 void zombies_splash(char x, char y, char w, char damage);
 
+bool zombies_done(void);
+
 #pragma compile("zombies.c")
 
 #endif

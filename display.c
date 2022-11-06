@@ -6,11 +6,15 @@ const char SpriteData[] = {
 	#embed spd_sprites lzo "zombies.spd"
 };
 
+char * debtrace2 = (char *)0x033d;
+
 __interrupt void music_irq(void)
 {
+	debtrace2[0] = 1;
 //	vic.color_border++;
 	music_play();
 //	vic.color_border--;
+	debtrace2[0] = 2;
 }
 
 

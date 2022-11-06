@@ -69,20 +69,25 @@ void plant_place(char x, char y, PlantType p)
 
 	switch (p)
 	{
-		case PT_SUNFLOWER:
+		case PT_SUNFLOWER_0:
+		case PT_SUNFLOWER_1:
 			pp->cool = 20;
 			pp->live = 5;
 			break;
-		case PT_PEASHOOTER:
-		case PT_REPEATER:
+		case PT_PEASHOOTER_0:
+		case PT_PEASHOOTER_1:
+		case PT_REPEATER_0:
+		case PT_REPEATER_1:
 			pp->cool = 3;
 			pp->live = 5;
 			break;
-		case PT_WALLNUT:
+		case PT_WALLNUT_0:
+		case PT_WALLNUT_1:
 			pp->cool = 0;
 			pp->live = 50;
 			break;
-		case PT_POTATOMINE:
+		case PT_POTATOMINE_0:
+		case PT_POTATOMINE_1:
 			pp->type = PT_POTATOMINE_HIDDEN;
 			pp->cool = 32;
 			pp->live = 5;
@@ -281,17 +286,27 @@ void menu_draw_price(char x, unsigned v)
 		hdp += 8;
 	}
 
-	char * cdp = Color + 4 * 40 + 4 * x;
-	hdp = Screen + 4 * 40 + 4 * x;
-	for(char j=0; j<4; j++)
+}
+
+void menu_progress(char p, char m)
+{
+	char * hdp = Screen + 4 * 40;
+
+	p = (m - p) * 40 / m;
+
+	for(char j=0; j<p; j++)
 	{
 		hdp[j] = VCOL_LT_GREY | (VCOL_DARK_GREY << 4);
+	}
+	for(char j=p; j<40; j++)
+	{
+		hdp[j] = VCOL_YELLOW | (VCOL_ORANGE << 4);		
 	}
 }
 
 void menu_init(void)
 {
-	memset(Hires, 0, 320 * 5);
+	memset(Hires, 0, 320 * 4);
 	menu_size = 0;
 }
 
@@ -400,6 +415,17 @@ void plant_draw_borders(void)
 			hdp += 40;
 		}
 	}
+
+	char * hdp = Hires + 4 * 320;
+	for(char i=0; i<40; i++)
+	{
+		const char * sdp = DigitsHiresData + 10 * 8;
+
+		for(char j=0; j<8; j++)
+			hdp[j] = sdp[j];
+		hdp += 8;
+	}
+
 }
 
 void plant_draw(char x, char y)
@@ -597,7 +623,8 @@ void plants_iterate(char y)
 		{
 			switch (p->type)
 			{
-				case PT_PEASHOOTER:
+				case PT_PEASHOOTER_0:
+				case PT_PEASHOOTER_1:
 					if (s < right)
 					{
 						p->cool = 7;
@@ -605,7 +632,8 @@ void plants_iterate(char y)
 					}
 					break;
 
-				case PT_REPEATER:
+				case PT_REPEATER_0:
+				case PT_REPEATER_1:
 					if (s < right)
 					{
 						p->cool = 7;
@@ -624,7 +652,7 @@ void plants_iterate(char y)
 
 				case PT_POTATOMINE_HIDDEN:
 					p->cool = 4;
-					p->type = PT_POTATOMINE;
+					p->type = PT_POTATOMINE_0;
 					plant_draw(s, y);
 					break;
 
@@ -640,7 +668,8 @@ void plants_iterate(char y)
 					s = ps;
 					break;
 
-				case PT_POTATOMINE:
+				case PT_POTATOMINE_0:
+				case PT_POTATOMINE_1:
 					p->cool = 4;
 
 					char z = zombies_first[y];
@@ -661,7 +690,8 @@ void plants_iterate(char y)
 					}
 					break;
 
-				case PT_SUNFLOWER:
+				case PT_SUNFLOWER_0:
+				case PT_SUNFLOWER_1:
 					if (!sun_active)
 					{
 						p->cool = 64 + (rand() & 63);
@@ -669,8 +699,9 @@ void plants_iterate(char y)
 					}
 					break;
 
-				case PT_CHOMPER_EAT:
-					p->type = PT_CHOMPER;
+				case PT_CHOMPER_EAT_0:
+				case PT_CHOMPER_EAT_1:
+					p->type = PT_CHOMPER_0;
 					plant_draw(s, y);
 					break;
 
@@ -700,5 +731,48 @@ void plants_iterate(char y)
 
 		ps = s;
 		s = n;
+	}
+}
+
+PlantType	plant_anim_tab[NUM_PLANT_TYPES] = {
+	[PT_SUNFLOWER_0] = PT_SUNFLOWER_1,
+	[PT_SUNFLOWER_1] = PT_SUNFLOWER_0,
+
+	[PT_REPEATER_0] = PT_REPEATER_1,
+	[PT_REPEATER_1] = PT_REPEATER_0,
+
+	[PT_PEASHOOTER_0] = PT_PEASHOOTER_1,
+	[PT_PEASHOOTER_1] = PT_PEASHOOTER_0,
+
+	[PT_WALLNUT_0] = PT_WALLNUT_1,
+	[PT_WALLNUT_1] = PT_WALLNUT_0,
+
+	[PT_CHOMPER_0] = PT_CHOMPER_1,
+	[PT_CHOMPER_1] = PT_CHOMPER_0,
+
+	[PT_CHOMPER_EAT_0] = PT_CHOMPER_EAT_1,
+	[PT_CHOMPER_EAT_1] = PT_CHOMPER_EAT_0,
+
+	[PT_POTATOMINE_0] = PT_POTATOMINE_1,
+	[PT_POTATOMINE_1] = PT_POTATOMINE_0,
+};
+
+void plants_animate(void)
+{
+	for(char i=0; i<4; i++)
+	{
+		unsigned	r = rand();
+		char	x = r & 15, y = (r >> 8) & 7;
+		if (x < 9 && y < 5)
+		{
+			Plant	*	p = plant_grid[y] + x;
+			PlantType	t = plant_anim_tab[p->type];
+			if (t != PT_NONE)
+			{
+				p->type = t;
+				plant_draw(x, y);
+				return;
+			}
+		}
 	}
 }

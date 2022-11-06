@@ -8,14 +8,19 @@ enum PlantType
 	PT_NONE,
 	PT_GROUND,
 
-	PT_PEASHOOTER,
-	PT_SUNFLOWER,
-	PT_WALLNUT,
+	PT_PEASHOOTER_0,
+	PT_PEASHOOTER_1,
+	PT_SUNFLOWER_0,
+	PT_SUNFLOWER_1,
+	PT_WALLNUT_0,
+	PT_WALLNUT_1,
 	PT_CHERRYBOMB,
 	PT_SUNSHROOM,
 	PT_CACTUS,
-	PT_POTATOMINE,
-	PT_REPEATER,
+	PT_POTATOMINE_0,
+	PT_POTATOMINE_1,
+	PT_REPEATER_0,
+	PT_REPEATER_1,
 
 	PT_SUN,
 	PT_SHOVEL,
@@ -29,8 +34,10 @@ enum PlantType
 	PT_EXPLOSION_2,
 	PT_EXPLOSION_3,
 
-	PT_CHOMPER,
-	PT_CHOMPER_EAT,
+	PT_CHOMPER_0,
+	PT_CHOMPER_1,
+	PT_CHOMPER_EAT_0,
+	PT_CHOMPER_EAT_1,
 
 	PT_PEASHOOTER_NIGHT,
 	PT_FLOORSPACE,
@@ -116,5 +123,7 @@ void shots_add(char x, char y, ShotType type);
 void shots_advance(char step);
 
 void plants_iterate(char y);
+
+void plants_animate(void);
 
 #endif

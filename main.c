@@ -109,26 +109,10 @@ void cursor_select(void)
 	}
 }
 
-int main(void)
+char * debtrace = (char *)0x033c;
+
+void game_level_loop(void)
 {
-	display_init();
-
-	shots_init();
-	zombies_init();
-
-
-
-	level_start(&TestLevel9);
-
-	menu_set(1);
-	cusor_show(0, 0);
-	cursor_move(0, 0);
-
-	plant_draw_borders();
-	for(char y=0; y<5; y++)
-		for(char x=0; x<9; x++)
-			plant_draw(x, y);
-
 	char	row = 0, warm = 0;
 	sun_count	= 500;
 
@@ -138,17 +122,25 @@ int main(void)
 	{
 		char sirq = rirq_count;
 
+		debtrace[0] = 1;
+
 		if (row & 1)
 			zombies_advance(row >> 1);
 		else
 			plants_iterate(row >> 1);
+
+		debtrace[0] = 2;
 
 		row++;
 		if (row == 10)
 		{
 			row = 0;
 			level_iterate();
+			if (level_complete() && zombies_done())
+				return;
 		}
+
+		debtrace[0] = 3;
 
 		warm++;
 		if (warm == 25)
@@ -157,8 +149,15 @@ int main(void)
 			menu_warmup();
 		}
 
+		debtrace[0] = 4;
+
 		shots_advance(step);
+
+		debtrace[0] = 5;
+
 		sun_advance();
+
+		debtrace[0] = 6;
 
 		if (sun_count > 0)
 			sun_count--;
@@ -167,6 +166,8 @@ int main(void)
 			sun_add(8, 50, 200, 25);
 			sun_count = 500;
 		}
+
+		debtrace[0] = 7;
 
 		keyb_poll();
 		switch (keyb_key)
@@ -215,6 +216,8 @@ int main(void)
 				break;
 		}
 
+		debtrace[0] = 8;
+
 		joy_poll(0);
 		if (joydown)
 		{
@@ -236,10 +239,45 @@ int main(void)
 			}
 		}
 
+		debtrace[0] = 9;
+
+		if (sirq == rirq_count)
+		{
+			plants_animate();
+		}
+
+		debtrace[0] = 10;
+
 		while (sirq == rirq_count)
 			;
 
 		step = rirq_count - sirq;
+
+		debtrace[0] = 11;
+	}
+}
+
+int main(void)
+{
+	display_init();
+
+	for(char level=8; level<9; level++)
+	{
+		shots_init();
+		zombies_init();
+		plant_draw_borders();
+
+		level_start(GameLevels[level]);
+
+		menu_set(1);
+		cusor_show(0, 0);
+		cursor_move(0, 0);
+
+		for(char y=0; y<5; y++)
+			for(char x=0; x<9; x++)
+				plant_draw(x, y);
+
+		game_level_loop();
 	}
 
 
