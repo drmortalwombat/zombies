@@ -96,6 +96,11 @@ void plant_place(char x, char y, PlantType p)
 			pp->cool = 3;
 			pp->live = 20;
 			break;
+		case PT_CHOMPER_0:
+		case PT_CHOMPER_1:
+			pp->cool = 0;
+			pp->live = 5;
+			break;				
 	}
 
 	char i = plant_first[y];
@@ -192,24 +197,32 @@ static const char colory_grey[16] = {
 
 void menu_cooldown(char x)
 {
-	char	t = menu[x].type;
-	menu[x].cool = 0xff;
-
-	char * cdp = Color + 4 * x;
-	char * hdp = Screen + 4 * x;
-
-	for(char i=0; i<4; i++)
+	if (menu[x].once)
 	{
-		#pragma unroll(full)
-		for(char j=0; j<4; j++)
+		menu[x].type = PT_CONVEYOR;
+		menu_draw(x, PT_CONVEYOR);
+	}
+	else
+	{
+		char	t = menu[x].type;
+		menu[x].cool = 0xff;
+
+		char * cdp = Color + 4 * x;
+		char * hdp = Screen + 4 * x;
+
+		for(char i=0; i<4; i++)
 		{
-			cdp[j] = colory_grey[PlantsColor0Data[16 * t + 4 * i + j] & 0x0f];
-			char c = PlantsColor1Data[16 * t + 4 * i + j];
-			hdp[j] = colory_grey[c & 0x0f] | (colory_grey[c >> 4] << 4);
-		}
-		cdp += 40;
-		hdp += 40;
-	}	
+			#pragma unroll(full)
+			for(char j=0; j<4; j++)
+			{
+				cdp[j] = colory_grey[PlantsColor0Data[16 * t + 4 * i + j] & 0x0f];
+				char c = PlantsColor1Data[16 * t + 4 * i + j];
+				hdp[j] = colory_grey[c & 0x0f] | (colory_grey[c >> 4] << 4);
+			}
+			cdp += 40;
+			hdp += 40;
+		}	
+	}
 }
 
 
@@ -308,24 +321,42 @@ void menu_init(void)
 {
 	memset(Hires, 0, 320 * 4);
 	menu_size = 0;
+	menu_first = 0;
 }
 
-void menu_add_item(PlantType type, unsigned price, char warm, bool ready)
+void menu_add_item_at(char x, PlantType type, unsigned price, char warm, bool ready, bool once)
+{
+	menu[x].type = type;
+	menu[x].price = price;
+	menu[x].warm = warm;
+	menu[x].cool = 0;
+	menu[x].once = false;
+	menu_draw(x, type);
+	if (!ready)
+		menu_cooldown(x);	
+	menu[x].once = once;
+	menu_draw_price(x, price);
+}
+
+void menu_add_item(PlantType type, unsigned price, char warm, bool ready, bool once)
 {
 	menu[menu_size].type = type;
 	menu[menu_size].price = price;
 	menu[menu_size].warm = warm;
 	menu[menu_size].cool = 0;
+	menu[menu_size].once = once;
 	menu_draw(menu_size, type);
 	menu_draw_price(menu_size, price);
 	if (!ready)
 		menu_cooldown(menu_size);
+	if (type == PT_SUN)
+		menu_first++;
 	menu_size++;
 }
 
 void menu_warmup(void)
 {
-	for(char i=1; i<menu_size; i++)
+	for(char i=menu_first; i<menu_size; i++)
 	{
 		if (menu[i].cool)
 		{
@@ -627,7 +658,7 @@ void plants_iterate(char y)
 				case PT_PEASHOOTER_1:
 					if (s < right)
 					{
-						p->cool = 7;
+						p->cool = 8;
 						shots_add(16 * s + 12, 4 * y + 1, ST_PEA);
 					}
 					break;
@@ -636,7 +667,7 @@ void plants_iterate(char y)
 				case PT_REPEATER_1:
 					if (s < right)
 					{
-						p->cool = 7;
+						p->cool = 8;
 						shots_add(16 * s + 16, 4 * y + 1, ST_PEA);
 						shots_add(16 * s + 8, 4 * y + 1, ST_PEA);
 					}
@@ -645,7 +676,7 @@ void plants_iterate(char y)
 				case PT_SNOWPEA:
 					if (s < right)
 					{
-						p->cool = 7;
+						p->cool = 8;
 						shots_add(16 * s + 12, 4 * y + 1, ST_FROST);
 					}
 					break;

@@ -42,6 +42,8 @@ enum PlantType
 	PT_PEASHOOTER_NIGHT,
 	PT_FLOORSPACE,
 
+	PT_CONVEYOR,
+
 	NUM_PLANT_TYPES
 };
 
@@ -71,6 +73,7 @@ struct MenuItem
 	PlantType	type;
 	unsigned	price;
 	char		cool, warm;
+	bool		once;
 };
 
 extern Plant	plant_grid[5][10];
@@ -78,7 +81,7 @@ extern char		plant_first[5];
 extern Shot		shots[32];
 extern char		shots_first, shots_free;
 extern MenuItem	menu[10];
-extern char		menu_size;
+extern char		menu_size, menu_first;
 extern int 		sun_x, sun_y, sun_vx, sun_vy;
 extern bool		sun_active;
 extern char		sun_power;
@@ -100,7 +103,11 @@ void menu_cooldown(char x);
 
 void menu_warmup(void);
 
-void menu_add_item(PlantType type, unsigned price, char warm, bool ready);
+void menu_add_item(PlantType type, unsigned price, char warm, bool ready, bool once);
+
+void menu_add_item_at(char x, PlantType type, unsigned price, char warm, bool ready, bool once);
+
+void menu_progress(char p, char m);
 
 // x and y in plant coords
 void plant_draw(char x, char y);

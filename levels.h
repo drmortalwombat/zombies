@@ -44,9 +44,16 @@ enum Seeds
 	SF_SHOVEL		=	0x8000
 };
 
+enum LevelFlags
+{
+	LF_DAY			=	0x0000,
+	LF_NIGHT		=	0x0001,
+	LF_CONVEYOR		=	0x0002
+};
+
 struct Level
 {
-	char					rows;
+	char					rows, flags;
 	unsigned				sun;
 	unsigned				seeds;
 	const LevelCommand	*	cmds;
@@ -54,6 +61,7 @@ struct Level
 };
 
 extern const Level	*	GameLevels[];
+extern const Level	*	level;
 
 void level_start(const Level * l);
 

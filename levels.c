@@ -2,7 +2,7 @@
 #include "plants.h"
 
 const Level	*	level;
-char			level_cmd, level_size;
+char			level_cmd, level_size, level_conveyor;
 unsigned		level_delay;
 
 char			level_rows[32];
@@ -754,6 +754,7 @@ static const LevelCommand	LevelDayCmds10[] = {
 
 static const Level	LevelDay1 = {
 	0b00100,
+	LF_DAY,
 	300,
 	SF_PEASHOOTER,
 	LevelDayCmds1,
@@ -762,6 +763,7 @@ static const Level	LevelDay1 = {
 
 static const Level	LevelDay2 = {
 	0b01110,
+	LF_DAY,
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER,
 	LevelDayCmds2,
@@ -770,6 +772,7 @@ static const Level	LevelDay2 = {
 
 static const Level	LevelDay3 = {
 	0b01110,
+	LF_DAY,
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB,
 	LevelDayCmds3,
@@ -778,6 +781,7 @@ static const Level	LevelDay3 = {
 
 static const Level	LevelDay4 = {
 	0b11111,
+	LF_DAY,
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT,
 	LevelDayCmds4,
@@ -786,6 +790,7 @@ static const Level	LevelDay4 = {
 
 static const Level	LevelDay6 = {
 	0b11111,
+	LF_DAY,
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SHOVEL,
 	LevelDayCmds6,
@@ -794,6 +799,7 @@ static const Level	LevelDay6 = {
 
 static const Level	LevelDay7 = {
 	0b11111,
+	LF_DAY,
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_SHOVEL,
 	LevelDayCmds7,
@@ -802,6 +808,7 @@ static const Level	LevelDay7 = {
 
 static const Level	LevelDay8 = {
 	0b11111,
+	LF_DAY,
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_SHOVEL,
 	LevelDayCmds8,
@@ -810,6 +817,7 @@ static const Level	LevelDay8 = {
 
 static const Level	LevelDay9 = {
 	0b11111,
+	LF_DAY,
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_SHOVEL,
 	LevelDayCmds9,
@@ -818,8 +826,9 @@ static const Level	LevelDay9 = {
 
 static const Level	LevelDay10 = {
 	0b11111,
+	LF_DAY | LF_CONVEYOR,
 	50,
-	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_SHOVEL,
+	SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_SHOVEL,
 	LevelDayCmds10,
 	TUNE_GAME_2
 };
@@ -842,6 +851,7 @@ void level_start(const Level * l)
 	level = l;
 	level_cmd = 0;
 	level_delay = 0;
+	level_conveyor = 0;
 
 	level_size = 0;
 	while (level->cmds[level_size] != LVC_END)
@@ -862,27 +872,36 @@ void level_start(const Level * l)
 	}
 
 	menu_init();
-	menu_add_item(PT_SUN, l->sun, 0, true);
 
 	unsigned	seeds = l->seeds;
-	if (seeds & SF_SUNFLOWER)
-		menu_add_item(PT_SUNFLOWER_0, 50, 17, true);
-	if (seeds & SF_PEASHOOTER)
-		menu_add_item(PT_PEASHOOTER_0, 100, 17, true);
-	if (seeds & SF_SNOWPEA)
-		menu_add_item(PT_SNOWPEA, 175, 17, false);
-	if (seeds & SF_WALLNUT)
-		menu_add_item(PT_WALLNUT_0, 50, 6, false);
-	if (seeds & SF_POTATOMINE)
-		menu_add_item(PT_POTATOMINE_0, 25, 6, false);
-	if (seeds & SF_REPEATER)
-		menu_add_item(PT_REPEATER_0, 200, 17, false);
-	if (seeds & SF_CHERRYBOMB)
-		menu_add_item(PT_CHERRYBOMB, 150, 3, false);
-	if (seeds & SF_CHOMPER)
-		menu_add_item(PT_CHOMPER_0, 150, 17, false);
+	if (l->flags & LF_CONVEYOR)
+	{
+		for(char i=0; i<9; i++)
+			menu_add_item(PT_CONVEYOR, 0, 0, false, false);
+	}
+	else
+	{
+		menu_add_item(PT_SUN, l->sun, 0, true, false);
+		if (seeds & SF_SUNFLOWER)
+			menu_add_item(PT_SUNFLOWER_0, 50, 17, true, false);
+		if (seeds & SF_PEASHOOTER)
+			menu_add_item(PT_PEASHOOTER_0, 100, 17, true, false);
+		if (seeds & SF_SNOWPEA)
+			menu_add_item(PT_SNOWPEA, 175, 17, false, false);
+		if (seeds & SF_WALLNUT)
+			menu_add_item(PT_WALLNUT_0, 50, 6, false, false);
+		if (seeds & SF_POTATOMINE)
+			menu_add_item(PT_POTATOMINE_0, 25, 6, false, false);
+		if (seeds & SF_REPEATER)
+			menu_add_item(PT_REPEATER_0, 200, 17, false, false);
+		if (seeds & SF_CHERRYBOMB)
+			menu_add_item(PT_CHERRYBOMB, 150, 3, false, false);
+		if (seeds & SF_CHOMPER)
+			menu_add_item(PT_CHOMPER_0, 150, 17, false, false);
+	}
+
 	if (seeds & SF_SHOVEL)
-		menu_add_item(PT_SHOVEL, 0, 17, false);
+		menu_add_item(PT_SHOVEL, 0, 17, false, false);
 
 	plant_grid_clear(l->rows);
 
@@ -893,6 +912,44 @@ void level_start(const Level * l)
 
 void level_iterate(void)
 {
+	if (level->flags & LF_CONVEYOR)
+	{
+		if (level_conveyor > 0)
+			level_conveyor--;
+		else
+		{
+			char x = 0;
+			while (x < menu_size && menu[x].type != PT_CONVEYOR)
+				x++;
+			if (x < menu_size)
+			{
+				unsigned	s = 0;
+				do {
+					s = 1 << (rand() & 15);
+				} while ((s == SF_SHOVEL) || !(level->seeds & s));
+
+				if (s & SF_SUNFLOWER)
+					menu_add_item_at(x, PT_SUNFLOWER_0, 0, 32, false, true);
+				else if (s & SF_PEASHOOTER)
+					menu_add_item_at(x, PT_PEASHOOTER_0, 0, 32, false, true);
+				else if (s & SF_SNOWPEA)
+					menu_add_item_at(x, PT_SNOWPEA, 0, 32, false, true);
+				else if (s & SF_WALLNUT)
+					menu_add_item_at(x, PT_WALLNUT_0, 0, 32, false, true);
+				else if (s & SF_POTATOMINE)
+					menu_add_item_at(x, PT_POTATOMINE_0, 0, 32, false, true);
+				else if (s & SF_REPEATER)
+					menu_add_item_at(x, PT_REPEATER_0, 0, 32, false, true);
+				else if (s & SF_CHERRYBOMB)
+					menu_add_item_at(x, PT_CHERRYBOMB, 0, 32, false, true);
+				else if (s & SF_CHOMPER)
+					menu_add_item_at(x, PT_CHOMPER_0, 0, 32, false, true);
+			}
+
+			level_conveyor = 20;
+		}
+	}
+
 	if (level_delay)
 		level_delay--;
 	else
