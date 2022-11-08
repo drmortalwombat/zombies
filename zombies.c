@@ -133,7 +133,7 @@ void zombies_advance(char y)
 					}
 				}
 			}
-			else if (px < 9 && plant_grid[y][px].type != PT_NONE)
+			else if (px < 9 && plant_grid[y][px].type > PT_GROUND)
 			{
 				if (zombies[s].type == ZOMBIE_POLE)
 				{

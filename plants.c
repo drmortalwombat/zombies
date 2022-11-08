@@ -50,11 +50,20 @@ char * ColorTab[25] = {
 	Color + 24 * 40
 };
 
+static inline char plant_color_map(char c)
+{
+	if ((c & 0xf0) == (VCOL_PURPLE << 4))
+		return (c & 0x0f) | (VCOL_GREEN << 4);
+	else
+		return c;
+}
+
+
 void plant_grid_clear(char rows)
 {
 	for(char y=0; y<5; y++)
 	{
-		char	t = (rows & 1) ? PT_NONE : PT_GROUND;
+		char	t = (rows & 1) ? PT_NONE_DAY : PT_GROUND;
 		rows >>= 1;
 		for(char x=0; x<10; x++)
 			plant_grid[y][x].type = t;
@@ -126,7 +135,7 @@ void plant_remove(char x, char y)
 {
 	__assume(x < 10);
 
-	plant_grid[y][x].type = PT_NONE;
+	plant_grid[y][x].type = PT_NONE_DAY;
 
 	char i = plant_first[y];
 	if (i == x)
@@ -168,7 +177,7 @@ void menu_draw(char x, char t)
 		for(char j=0; j<4; j++)
 		{
 			cdp[j] = PlantsColor0Data[16 * t + 4 * i + j];
-			hdp[j] = PlantsColor1Data[16 * t + 4 * i + j];
+			hdp[j] = plant_color_map(PlantsColor1Data[16 * t + 4 * i + j]);
 		}
 		cdp += 40;
 		hdp += 40;
@@ -216,7 +225,7 @@ void menu_cooldown(char x)
 			for(char j=0; j<4; j++)
 			{
 				cdp[j] = colory_grey[PlantsColor0Data[16 * t + 4 * i + j] & 0x0f];
-				char c = PlantsColor1Data[16 * t + 4 * i + j];
+				char c = plant_color_map(PlantsColor1Data[16 * t + 4 * i + j]);
 				hdp[j] = colory_grey[c & 0x0f] | (colory_grey[c >> 4] << 4);
 			}
 			cdp += 40;
@@ -237,7 +246,7 @@ void menu_draw_color_line(char x, char y)
 	for(char j=0; j<4; j++)
 	{
 		cdp[j] = PlantsColor0Data[16 * t + 4 * y + j];
-		hdp[j] = PlantsColor1Data[16 * t + 4 * y + j];
+		hdp[j] = plant_color_map(PlantsColor1Data[16 * t + 4 * y + j]);
 	}
 }
 
@@ -438,9 +447,9 @@ void plant_draw_borders(void)
 			for(char j=0; j<2; j++)
 			{
 				cdp[j] = PlantsColor0Data[16 * PT_FLOORSPACE + 4 * i + j + 2];
-				hdp[j] = PlantsColor1Data[16 * PT_FLOORSPACE + 4 * i + j + 2];
+				hdp[j] = plant_color_map(PlantsColor1Data[16 * PT_FLOORSPACE + 4 * i + j + 2]);
 				cdp[j + 38] = PlantsColor0Data[16 * PT_FLOORSPACE + 4 * i + j];
-				hdp[j + 38] = PlantsColor1Data[16 * PT_FLOORSPACE + 4 * i + j];
+				hdp[j + 38] = plant_color_map(PlantsColor1Data[16 * PT_FLOORSPACE + 4 * i + j]);
 			}
 			cdp += 40;
 			hdp += 40;
@@ -483,7 +492,7 @@ void plant_draw(char x, char y)
 		for(char j=0; j<4; j++)
 		{
 			cdp[j] = PlantsColor0Data[16 * p + 4 * i + j];
-			hdp[j] = PlantsColor1Data[16 * p + 4 * i + j];
+			hdp[j] = plant_color_map(PlantsColor1Data[16 * p + 4 * i + j]);
 		}
 		cdp += 40;
 		hdp += 40;
@@ -673,7 +682,8 @@ void plants_iterate(char y)
 					}
 					break;
 
-				case PT_SNOWPEA:
+				case PT_SNOWPEA_0:
+				case PT_SNOWPEA_1:
 					if (s < right)
 					{
 						p->cool = 8;
@@ -689,7 +699,7 @@ void plants_iterate(char y)
 
 				case PT_EXPLOSION_3:
 				case PT_POTATOMINE_EXPLODED:
-					p->type = PT_NONE;
+					p->type = PT_NONE_DAY;
 					plant_draw(s, y);
 
 					if (ps != 0xff)
@@ -786,6 +796,9 @@ PlantType	plant_anim_tab[NUM_PLANT_TYPES] = {
 
 	[PT_POTATOMINE_0] = PT_POTATOMINE_1,
 	[PT_POTATOMINE_1] = PT_POTATOMINE_0,
+
+	[PT_SNOWPEA_0] = PT_SNOWPEA_1,
+	[PT_SNOWPEA_1] = PT_SNOWPEA_0,
 };
 
 void plants_animate(void)
@@ -798,7 +811,7 @@ void plants_animate(void)
 		{
 			Plant	*	p = plant_grid[y] + x;
 			PlantType	t = plant_anim_tab[p->type];
-			if (t != PT_NONE)
+			if (t)
 			{
 				p->type = t;
 				plant_draw(x, y);

@@ -887,7 +887,7 @@ void level_start(const Level * l)
 		if (seeds & SF_PEASHOOTER)
 			menu_add_item(PT_PEASHOOTER_0, 100, 17, true, false);
 		if (seeds & SF_SNOWPEA)
-			menu_add_item(PT_SNOWPEA, 175, 17, false, false);
+			menu_add_item(PT_SNOWPEA_0, 175, 17, false, false);
 		if (seeds & SF_WALLNUT)
 			menu_add_item(PT_WALLNUT_0, 50, 6, false, false);
 		if (seeds & SF_POTATOMINE)
@@ -933,7 +933,7 @@ void level_iterate(void)
 				else if (s & SF_PEASHOOTER)
 					menu_add_item_at(x, PT_PEASHOOTER_0, 0, 32, false, true);
 				else if (s & SF_SNOWPEA)
-					menu_add_item_at(x, PT_SNOWPEA, 0, 32, false, true);
+					menu_add_item_at(x, PT_SNOWPEA_0, 0, 32, false, true);
 				else if (s & SF_WALLNUT)
 					menu_add_item_at(x, PT_WALLNUT_0, 0, 32, false, true);
 				else if (s & SF_POTATOMINE)

@@ -85,7 +85,7 @@ void cursor_select(void)
 	{
 		if (menu[menuX].type == PT_SHOVEL)
 		{
-			if (menu[menuX].cool == 0 && plant_grid[cursorY][cursorX].type != PT_NONE)
+			if (menu[menuX].cool == 0 && plant_grid[cursorY][cursorX].type > PT_GROUND)
 			{
 				menu_cooldown(menuX);
 				plant_remove(cursorX, cursorY);
@@ -94,7 +94,7 @@ void cursor_select(void)
 		}
 		else if (menu[menuX].type != PT_CONVEYOR)
 		{
-			if (plant_grid[cursorY][cursorX].type == PT_NONE)
+			if (plant_grid[cursorY][cursorX].type < PT_GROUND)
 			{
 				if (menu[menuX].cool == 0 && menu[menuX].price <= menu[0].price)
 				{
