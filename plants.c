@@ -50,6 +50,29 @@ char * ColorTab[25] = {
 	Color + 24 * 40
 };
 
+char * ScreenTab[25] = {
+	Screen +  0 * 40, Screen +  1 * 40, Screen +  2 * 40, Screen +  3 * 40,
+	Screen +  4 * 40, Screen +  5 * 40, Screen +  6 * 40, Screen +  7 * 40,
+	Screen +  8 * 40, Screen +  9 * 40, Screen + 10 * 40, Screen + 11 * 40,
+	Screen + 12 * 40, Screen + 13 * 40, Screen + 14 * 40, Screen + 15 * 40,
+	Screen + 16 * 40, Screen + 17 * 40, Screen + 18 * 40, Screen + 19 * 40,
+	Screen + 20 * 40, Screen + 21 * 40, Screen + 22 * 40, Screen + 23 * 40,
+	Screen + 24 * 40
+};
+
+int HiresOffset[10] = {
+	16 + 0 * 32,
+	16 + 1 * 32,
+	16 + 2 * 32,
+	16 + 3 * 32,
+	16 + 4 * 32,
+	16 + 5 * 32,
+	16 + 6 * 32,
+	16 + 7 * 32,
+	16 + 8 * 32,
+	16 + 9 * 32,
+};
+
 static inline char plant_color_map(char c)
 {
 	if ((c & 0xf0) == (VCOL_PURPLE << 4))
@@ -470,9 +493,13 @@ void plant_draw_borders(void)
 
 void plant_draw(char x, char y)
 {
+	__assume(x < 10);
+
 	PlantType	p = plant_grid[y][x].type;
 
-	char * hdp = Hires + 16 + 5 * 320 + 32 * x + 320 * 4 * y;
+	char * hdp = HiresTab[5 + 4 * y] + HiresOffset[x];
+
+//	Hires + 16 + 5 * 320 + 32 * x + 320 * 4 * y;
 	const char * sdp = PlantsHiresData + 8 * 16 * p;
 
 	for(char i=0; i<4; i++)
@@ -483,17 +510,25 @@ void plant_draw(char x, char y)
 		sdp += 8 * 4;
 	}
 
-	char * cdp = Color + 2 + 5 * 40 + 4 * x + 40 * 4 * y;
-	hdp = Screen + 2 + 5 * 40 + 4 * x + 40 * 4 * y;
+	char * cdp = ColorTab[5 + 4 * y] + 2 + 4 * x;
+	hdp = ScreenTab[5 + 4 * y] + 2 + 4 * x;
+
+//	char * cdp = Color + 2 + 5 * 40 + 4 * x + 40 * 4 * y;
+//	hdp = Screen + 2 + 5 * 40 + 4 * x + 40 * 4 * y;
+
+	const char * scdp = PlantsColor0Data + 16 * p;
+	const char * shdp = PlantsColor1Data + 16 * p;
 
 	for(char i=0; i<4; i++)
 	{
-		#pragma unroll(full)
 		for(char j=0; j<4; j++)
 		{
-			cdp[j] = PlantsColor0Data[16 * p + 4 * i + j];
-			hdp[j] = plant_color_map(PlantsColor1Data[16 * p + 4 * i + j]);
+			cdp[j] = scdp[j];
+			hdp[j] = plant_color_map(shdp[j]);
 		}
+		scdp += 4;
+		shdp += 4;
+		
 		cdp += 40;
 		hdp += 40;
 	}
