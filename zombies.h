@@ -25,7 +25,7 @@ struct Zombie
 	char		speed;
 };
 
-extern Zombie	zombies[32];
+extern __striped Zombie	zombies[32];
 extern char		zombies_first[5], zombies_free;
 extern char		zombies_left[5], zombies_right[5];
 

@@ -1,5 +1,6 @@
 #include "display.h"
 #include "gamemusic.h"
+#include <audio/sidfx.h>
 
 
 const char SpriteData[] = {
@@ -17,6 +18,11 @@ __interrupt void music_irq(void)
 	debtrace2[0] = 2;
 }
 
+
+__interrupt void sidfx_irq(void)
+{
+	sidfx_loop_2();
+}
 
 void display_init(void)
 {
@@ -43,6 +49,7 @@ void display_init(void)
 	memset(Color, 0, 1000);
 
 	music_init(TUNE_GAME_6);
+	sidfx_init();
 
 	rirq_init_kernal();
 
@@ -66,11 +73,12 @@ void display_init(void)
 		rirq_set(i, 50 + 5 * 8 + 4 * 8 * i, zombieMux[i]);
 	}
 
-	rirq_build(&menuMux, 4);
+	rirq_build(&menuMux, 5);
 	rirq_write(&menuMux, 0, &(vic.spr_pos[6].y), 50 - 10);
 	rirq_write(&menuMux, 1, &(vic.spr_pos[6].x), 24);
 	rirq_write(&menuMux, 2, &vic.spr_msbx, 0);
 	rirq_write(&menuMux, 3, Screen + 0x3f8 + 6, 16 + 109);
+	rirq_call(&menuMux, 4, sidfx_irq);
 	rirq_set(6, 10, &menuMux);
 
 	rirq_build(&cursorMux, 4);

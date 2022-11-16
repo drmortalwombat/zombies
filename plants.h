@@ -81,7 +81,7 @@ struct MenuItem
 
 extern Plant	plant_grid[5][10];
 extern char		plant_first[5];
-extern Shot		shots[32];
+extern __striped Shot		shots[32];
 extern char		shots_first, shots_free;
 extern MenuItem	menu[10];
 extern char		menu_size, menu_first;
@@ -134,6 +134,6 @@ void shots_advance(char step);
 
 void plants_iterate(char y);
 
-void plants_animate(void);
+void plants_animate(char y);
 
 #endif

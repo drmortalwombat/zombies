@@ -233,7 +233,10 @@ void game_level_loop(void)
 
 		if (sirq == rirq_count)
 		{
-			plants_animate();
+			if (row >= 5)
+				plants_animate(row - 5);
+			else
+				plants_animate(row);
 		}
 
 		while (sirq == rirq_count)
@@ -263,7 +266,9 @@ int main(void)
 			for(char x=0; x<9; x++)
 				plant_draw(x, y);
 
+		music_patch_voice3(false);
 		game_level_loop();
+		music_patch_voice3(true);
 
 
 		music_init(TUNE_VICTORY);

@@ -2,6 +2,7 @@
 #include "display.h"
 #include "zombies.h"
 #include <c64/vic.h>
+#include <audio/sidfx.h>
 
 const char PlantsHiresData[] = {
 	#embed ctm_chars "plants.ctm"
@@ -30,7 +31,37 @@ int 		sun_x, sun_y, sun_vx, sun_vy;
 bool		sun_active;
 char		sun_power;
 
-char * HiresTab[25] = {
+SIDFX	SIDFXZombieHit[1] = {{
+	4000, 4096,
+	SID_CTRL_GATE | SID_CTRL_NOISE,
+	SID_ATK_2 | SID_DKY_6,
+	0xf0  | SID_DKY_168,
+	-400, 0,
+	2, 6,
+	10
+}};
+
+SIDFX	SIDFXPlanted[1] = {{
+	20000, 4096,
+	SID_CTRL_GATE | SID_CTRL_NOISE,
+	SID_ATK_16 | SID_DKY_6,
+	0xf0  | SID_DKY_240,
+	-400, 0,
+	2, 16,
+	20
+}};
+
+SIDFX	SIDFXExplosion[1] = {{
+	1000, 1000, 
+	SID_CTRL_GATE | SID_CTRL_NOISE,
+	SID_ATK_2 | SID_DKY_6,
+	0xf0  | SID_DKY_1500,
+	-20, 0,
+	8, 40,
+	30
+}};
+
+__striped char * HiresTab[25] = {
 	Hires +  0 * 320, Hires +  1 * 320, Hires +  2 * 320, Hires +  3 * 320,
 	Hires +  4 * 320, Hires +  5 * 320, Hires +  6 * 320, Hires +  7 * 320,
 	Hires +  8 * 320, Hires +  9 * 320, Hires + 10 * 320, Hires + 11 * 320,
@@ -40,7 +71,7 @@ char * HiresTab[25] = {
 	Hires + 24 * 320
 };
 
-char * ColorTab[25] = {
+__striped char * ColorTab[25] = {
 	Color +  0 * 40, Color +  1 * 40, Color +  2 * 40, Color +  3 * 40,
 	Color +  4 * 40, Color +  5 * 40, Color +  6 * 40, Color +  7 * 40,
 	Color +  8 * 40, Color +  9 * 40, Color + 10 * 40, Color + 11 * 40,
@@ -50,7 +81,7 @@ char * ColorTab[25] = {
 	Color + 24 * 40
 };
 
-char * ScreenTab[25] = {
+__striped char * ScreenTab[25] = {
 	Screen +  0 * 40, Screen +  1 * 40, Screen +  2 * 40, Screen +  3 * 40,
 	Screen +  4 * 40, Screen +  5 * 40, Screen +  6 * 40, Screen +  7 * 40,
 	Screen +  8 * 40, Screen +  9 * 40, Screen + 10 * 40, Screen + 11 * 40,
@@ -60,7 +91,7 @@ char * ScreenTab[25] = {
 	Screen + 24 * 40
 };
 
-int HiresOffset[10] = {
+__striped int HiresOffset[10] = {
 	16 + 0 * 32,
 	16 + 1 * 32,
 	16 + 2 * 32,
@@ -152,6 +183,8 @@ void plant_place(char x, char y, PlantType p)
 	}
 
 	pp->next = i;
+
+	sidfx_play(2, SIDFXPlanted, 1);
 }
 
 void plant_remove(char x, char y)
@@ -434,6 +467,40 @@ void sun_advance(void)
 	}
 }
 
+SIDFX	SIDFXSunshine[4] = {{
+	NOTE_C(8), 4096,
+	SID_CTRL_GATE | SID_CTRL_TRI,
+	SID_ATK_2 | SID_DKY_6,
+	0xf0  | SID_DKY_6,
+	0, 0,
+	1, 0,
+	5
+},{
+	NOTE_E(8), 4096,
+	SID_CTRL_GATE | SID_CTRL_TRI,
+	SID_ATK_2 | SID_DKY_6,
+	0xf0  | SID_DKY_6,
+	0, 0,
+	1, 0,
+	5
+},{
+	NOTE_G(8), 4096,
+	SID_CTRL_GATE | SID_CTRL_TRI,
+	SID_ATK_2 | SID_DKY_6,
+	0xf0  | SID_DKY_6,
+	0, 0,
+	1, 0,
+	5
+},{
+	NOTE_C(9), 4096,
+	SID_CTRL_GATE | SID_CTRL_TRI,
+	SID_ATK_16 | SID_DKY_6,
+	0xf0  | SID_DKY_168,
+	0, 0,
+	4, 16,
+	5
+}};
+
 void sun_add(char x, char y, char vy, char power)
 {
 	sun_active = true;
@@ -442,6 +509,8 @@ void sun_add(char x, char y, char vy, char power)
 	sun_vx = 0;
 	sun_vy = vy;
 	sun_power = power;
+
+	sidfx_play(2, SIDFXSunshine, 4);
 }
 
 void plant_draw_borders(void)
@@ -655,6 +724,7 @@ void shots_advance(char step)
 						zombies[z].frozen = 3;
 					zombies[z].live -= 2;
 					keep = false;
+					sidfx_play(2, SIDFXZombieHit, 1);
 					break;
 				}
 				z = zombies[z].next;
@@ -761,8 +831,9 @@ void plants_iterate(char y)
 						z = zombies[z].next;
 					}
 					if (p->type == PT_POTATOMINE_EXPLODED)
-					{
+					{						
 						plant_draw(s, y);			
+						sidfx_play(2, SIDFXExplosion, 1);
 					}
 					break;
 
@@ -789,6 +860,7 @@ void plants_iterate(char y)
 						zombies_splash(s * 16 + 28, y + 1, 16, 80);
 					p->type = PT_EXPLOSION_0;
 					plant_draw(s, y);
+					sidfx_play(2, SIDFXExplosion, 1);					
 					break;					
 				case PT_EXPLOSION_0:
 					p->type = PT_EXPLOSION_1;
@@ -836,22 +908,17 @@ PlantType	plant_anim_tab[NUM_PLANT_TYPES] = {
 	[PT_SNOWPEA_1] = PT_SNOWPEA_0,
 };
 
-void plants_animate(void)
+void plants_animate(char y)
 {
-	for(char i=0; i<4; i++)
+	unsigned	r = rand();
+	char		x = ((r & 0xff) * 9) >> 8;
+
+	Plant	*	p = plant_grid[y] + x;
+	PlantType	t = plant_anim_tab[p->type];
+	if (t)
 	{
-		unsigned	r = rand();
-		char	x = r & 15, y = (r >> 8) & 7;
-		if (x < 9 && y < 5)
-		{
-			Plant	*	p = plant_grid[y] + x;
-			PlantType	t = plant_anim_tab[p->type];
-			if (t)
-			{
-				p->type = t;
-				plant_draw(x, y);
-				return;
-			}
-		}
+		p->type = t;
+		plant_draw(x, y);
+		return;
 	}
 }
