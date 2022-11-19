@@ -10,7 +10,9 @@ enum ZombieType
 	ZOMBIE_CONE,
 	ZOMBIE_POLE,
 	ZOMBIE_VAULT,
-	ZOMBIE_BUCKET
+	ZOMBIE_BUCKET,
+	ZOMBIE_PAPER,
+	ZOMBIE_ANGRY
 };
 
 struct Zombie
@@ -34,6 +36,8 @@ extern char		zombies_left[5], zombies_right[5];
 void zombies_init(void);
 
 void zombies_add(char x, char y, ZombieType type);
+
+void zombies_grave(ZombieType type);
 
 void zombies_set_msbx(char mask, char val);
 

@@ -2,20 +2,23 @@
 #include "gamemusic.h"
 #include <audio/sidfx.h>
 
+#pragma section( sprites, 0)
+
+#pragma region( sprites, 0xc000, 0xd000, , , {sprites} )
+
+#pragma data(sprites)
 
 const char SpriteData[] = {
 	#embed spd_sprites lzo "zombies.spd"
 };
 
-char * debtrace2 = (char *)0x033d;
+#pragma data(data)
 
 __interrupt void music_irq(void)
 {
-	debtrace2[0] = 1;
 //	vic.color_border++;
 	music_play();
 //	vic.color_border--;
-	debtrace2[0] = 2;
 }
 
 
@@ -32,7 +35,8 @@ void display_init(void)
 
 	mmap_set(MMAP_RAM);
 
-	oscar_expand_lzo(Sprites, SpriteData);
+	memcpy(Hires, SpriteData, sizeof(SpriteData));
+	oscar_expand_lzo(Sprites, Hires);
 
 	mmap_set(MMAP_NO_ROM);
 

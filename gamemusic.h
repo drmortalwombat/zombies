@@ -19,6 +19,8 @@ enum Tune
 	TUNE_GAME_6, // NIGHT
 };
 
+extern bool music_active;
+
 void music_init(Tune tune);
 
 void music_queue(Tune tune);

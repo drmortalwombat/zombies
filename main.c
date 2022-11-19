@@ -13,7 +13,7 @@
 #include "zombies.h"
 #include "levels.h"
 
-#pragma region( main, 0x0a00, 0x9800, , , {code, data, bss, heap, stack} )
+#pragma region( main, 0x0900, 0x9800, , , {code, data, bss, heap, stack} )
 #pragma stacksize(1024)
 
 signed char cursorX, cursorY, menuX;
@@ -94,7 +94,7 @@ void cursor_select(void)
 		}
 		else if (menu[menuX].type != PT_CONVEYOR)
 		{
-			if (plant_grid[cursorY][cursorX].type < PT_GROUND)
+			if (plant_grid[cursorY][cursorX].type < PT_TOMBSTONE)
 			{
 				if (menu[menuX].cool == 0 && menu[menuX].price <= menu[0].price)
 				{
@@ -250,11 +250,10 @@ int main(void)
 {
 	display_init();
 
-	for(char level=0; level<9; level++)
+	for(char level=10; level<11; level++)
 	{
 		shots_init();
 		zombies_init();
-		plant_draw_borders();
 
 		level_start(GameLevels[level]);
 

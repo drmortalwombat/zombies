@@ -41,6 +41,9 @@ void zombies_add(char x, char y, ZombieType type)
 				zombies[s].live = 50;
 				zombies[s].speed *= 2;
 				break;
+			case ZOMBIE_PAPER:
+				zombies[s].live = 15;
+				break;			
 		}
 		zombies[s].frozen = 0;
 		zombies[s].type = type;
@@ -52,6 +55,20 @@ void zombies_add(char x, char y, ZombieType type)
 
 char	zombies_msbx[5];
 char	zombies_basemsbx;
+
+void zombies_grave(ZombieType type)
+{
+	for(char y=0; y<5; y++)
+	{
+		char p = plant_first[y];
+		while (p != 0xff)
+		{
+			if (plant_grid[y][p].type == PT_TOMBSTONE)
+				zombies_add(p * 16 + 16, y, type);
+			p = plant_grid[y][p].next;
+		}
+	}
+}
 
 void zombies_set_msbx(char mask, char val)
 {
@@ -98,6 +115,7 @@ void zombies_advance(char y)
 				case ZOMBIE_POLE:
 				case ZOMBIE_VAULT:
 				case ZOMBIE_BASE:
+				case ZOMBIE_ANGRY:
 					zombies[s].type = ZOMBIE_CORPSE;
 					zombies[s].phase = 0;
 					break;
@@ -106,6 +124,11 @@ void zombies_advance(char y)
 					zombies[s].type = ZOMBIE_BASE;
 					zombies[s].live += 20;
 					break;
+				case ZOMBIE_PAPER:					
+					zombies[s].type = ZOMBIE_ANGRY;
+					zombies[s].live += 27;
+					zombies[s].speed *= 2;
+					break;					
 				case ZOMBIE_CORPSE:
 					zombies[s].phase++;
 					if (zombies[s].phase == 4)
@@ -220,6 +243,12 @@ void zombies_advance(char y)
 				 		break;
 				 	case ZOMBIE_BUCKET:
 				 		img += 30 + 16;
+				 		break;
+				 	case ZOMBIE_PAPER:
+				 		img += 40 + 16;
+				 		break;
+				 	case ZOMBIE_ANGRY:
+				 		img += 50 + 16;
 				 		break;
 				}
 

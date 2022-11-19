@@ -8,6 +8,8 @@ enum PlantType
 	PT_NONE_DAY,
 	PT_NONE_NIGHT,
 
+	PT_TOMBSTONE,
+
 	PT_GROUND,
 
 	PT_PEASHOOTER_0,
@@ -17,7 +19,7 @@ enum PlantType
 	PT_WALLNUT_0,
 	PT_WALLNUT_1,
 	PT_CHERRYBOMB,
-	PT_SUNSHROOM,
+	PT_TESTSHROOM,
 	PT_CACTUS,
 	PT_POTATOMINE_0,
 	PT_POTATOMINE_1,
@@ -47,6 +49,15 @@ enum PlantType
 
 	PT_CONVEYOR,
 
+	PT_PUFFSHROOM_0,
+	PT_PUFFSHROOM_1,
+
+	PT_SUNSHROOM_0,
+	PT_SUNSHROOM_1,
+
+	PT_SUNSHROOM_BIG_0,
+	PT_SUNSHROOM_BIG_1,
+
 	NUM_PLANT_TYPES
 };
 
@@ -56,18 +67,20 @@ struct Plant
 	PlantType	type;
 	char		cool;
 	char		live;
+	char		age;
 };
 
 enum ShotType
 {
 	ST_PEA,
-	ST_FROST
+	ST_FROST,
+	ST_PUFF
 };
 
 struct Shot
 {
 	char		next;
-	char		x, y;
+	char		x, y, t;
 	ShotType	type;
 };
 
@@ -83,11 +96,13 @@ extern Plant	plant_grid[5][10];
 extern char		plant_first[5];
 extern __striped Shot		shots[32];
 extern char		shots_first, shots_free;
-extern MenuItem	menu[10];
+extern __striped MenuItem	menu[10];
 extern char		menu_size, menu_first;
 extern int 		sun_x, sun_y, sun_vx, sun_vy;
 extern bool		sun_active;
 extern char		sun_power;
+extern char		back_color;
+extern char		back_tile;
 
 #pragma align(plant_grid, 256)
 #pragma align(shots, 256)
@@ -128,7 +143,7 @@ void plant_remove(char x, char y);
 
 void shots_init(void);
 
-void shots_add(char x, char y, ShotType type);
+void shots_add(char x, char y, char t, ShotType type);
 
 void shots_advance(char step);
 

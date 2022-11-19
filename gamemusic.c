@@ -42,9 +42,12 @@ void music_play(void)
 		}
 	}
 #endif
-	__asm
+	if (music_active)
 	{
-		jsr		$9803
+		__asm
+		{
+			jsr		$9803
+		}
 	}
 }
 
