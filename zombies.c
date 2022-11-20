@@ -44,6 +44,9 @@ void zombies_add(char x, char y, ZombieType type)
 			case ZOMBIE_PAPER:
 				zombies[s].live = 15;
 				break;			
+			case ZOMBIE_SCREENDOOR:
+				zombies[s].live = 117;
+				break;
 		}
 		zombies[s].frozen = 0;
 		zombies[s].type = type;
@@ -88,9 +91,29 @@ void zombies_splash(char x, char y, char w, char damage)
 	while (s != 0xff)
 	{
 		if (zombies[s].x < x + w && zombies[s].x + w >= x)
+		{
 			zombies[s].live -= damage;
+			zombies[s].frozen |= 0x80;
+		}
 		s = zombies[s].next;
 	}
+}
+
+void zombies_fume(char x, char y, char w)
+{
+	char s = zombies_first[y];
+	while (s != 0xff)
+	{
+		if (zombies[s].x < x + w && zombies[s].x >= x)
+		{
+			if (zombies[s].type == ZOMBIE_SCREENDOOR)
+				zombies[s].live -= 12;
+			else
+				zombies[s].live -= 2;
+			zombies[s].frozen |= 0x80;
+		}
+		s = zombies[s].next;
+	}	
 }
 
 void zombies_advance(char y)
@@ -106,6 +129,7 @@ void zombies_advance(char y)
 	{
 		char n = zombies[s].next;
 
+		char color = VCOL_MED_GREY;
 		char px = (zombies[s].x - 16) >> 4;
 
 		if (zombies[s].live <= 0)
@@ -121,6 +145,7 @@ void zombies_advance(char y)
 					break;
 				case ZOMBIE_CONE:
 				case ZOMBIE_BUCKET:
+				case ZOMBIE_SCREENDOOR:
 					zombies[s].type = ZOMBIE_BASE;
 					zombies[s].live += 20;
 					break;
@@ -139,8 +164,17 @@ void zombies_advance(char y)
 
 		if (zombies[s].type >= ZOMBIE_BASE)
 		{
+			if (zombies[s].frozen & 0x80)
+			{
+				zombies[s].frozen &= 0x7f;
+				color = VCOL_LT_GREY;
+			}
+
 			if (zombies[s].frozen)
+			{
+				color = VCOL_LT_BLUE;
 				zombies[s].frozen--;
+			}
 			else if (zombies[s].type == ZOMBIE_VAULT)
 			{
 				unsigned	d = zombies[s].delay + 128;
@@ -173,7 +207,10 @@ void zombies_advance(char y)
 						plant_grid[y][px].live--;
 						if (plant_grid[y][px].live == 0)
 						{
-							plant_remove(px, y);
+							if (plant_grid[y][px].type == PT_GRAVEDIGGER_0)
+								plant_grid[y][px].type = PT_TOMBSTONE;
+							else
+								plant_remove(px, y);
 							plant_draw(px, y);
 						}
 					}
@@ -250,9 +287,10 @@ void zombies_advance(char y)
 				 	case ZOMBIE_ANGRY:
 				 		img += 50 + 16;
 				 		break;
+				 	case ZOMBIE_SCREENDOOR:
+				 		img += 60 + 16;
+				 		break;
 				}
-
-				char		color = zombies[s].frozen ? VCOL_LT_BLUE : VCOL_MED_GREY;
 
 				rirq_data(zombieMux[y], 1 * ZOMBIE_SPRITES + nz, x & 0xff);
 				rirq_data(zombieMux[y], 2 * ZOMBIE_SPRITES + nz, img);

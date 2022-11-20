@@ -83,20 +83,20 @@ void cursor_select(void)
 {
 	if (cursorY >= 0)
 	{
-		if (menu[menuX].type == PT_SHOVEL)
+		switch (menu[menuX].type)
 		{
-			if (menu[menuX].cool == 0 && plant_grid[cursorY][cursorX].type > PT_GROUND)
-			{
-				menu_cooldown(menuX);
-				plant_remove(cursorX, cursorY);
-				plant_draw(cursorX, cursorY);						
-			}
-		}
-		else if (menu[menuX].type != PT_CONVEYOR)
-		{
-			if (plant_grid[cursorY][cursorX].type < PT_TOMBSTONE)
-			{
-				if (menu[menuX].cool == 0 && menu[menuX].price <= menu[0].price)
+			case PT_SHOVEL:
+				if (menu[menuX].cool == 0 && plant_grid[cursorY][cursorX].type > PT_GROUND)
+				{
+					menu_cooldown(menuX);
+					plant_remove(cursorX, cursorY);
+					plant_draw(cursorX, cursorY);						
+				}
+				break;
+
+			case PT_GRAVEDIGGER:
+
+				if (menu[menuX].cool == 0 && menu[menuX].price <= menu[0].price && plant_grid[cursorY][cursorX].type == PT_TOMBSTONE)
 				{
 					menu[0].price -= menu[menuX].price;
 					menu_draw_price(0, menu[0].price);
@@ -104,7 +104,24 @@ void cursor_select(void)
 					plant_draw(cursorX, cursorY);
 					menu_cooldown(menuX);
 				}
-			}
+				break;
+
+			case PT_CONVEYOR:
+				break;
+
+			default:
+				if (plant_grid[cursorY][cursorX].type < PT_TOMBSTONE)
+				{
+					if (menu[menuX].cool == 0 && menu[menuX].price <= menu[0].price)
+					{
+						menu[0].price -= menu[menuX].price;
+						menu_draw_price(0, menu[0].price);
+						plant_place(cursorX, cursorY, menu[menuX].type);
+						plant_draw(cursorX, cursorY);
+						menu_cooldown(menuX);
+					}
+				}
+				break;
 		}
 	}
 }
@@ -149,7 +166,7 @@ void game_level_loop(void)
 
 		sun_advance();
 
-		if (!(level->flags & LF_CONVEYOR))
+		if (!(level->flags & LF_CONVEYOR) && !(level->flags & LF_NIGHT))
 		{
 			if (sun_count >= step)
 				sun_count -= step;
@@ -250,7 +267,7 @@ int main(void)
 {
 	display_init();
 
-	for(char level=10; level<11; level++)
+	for(char level=12; level<13; level++)
 	{
 		shots_init();
 		zombies_init();

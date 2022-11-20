@@ -128,9 +128,16 @@ void plant_grid_clear(char rows)
 
 void plant_place(char x, char y, PlantType p)
 {
+	__assume(x < 10);
+
+	__assume(y < 5);
 	Plant	*	pp = plant_grid[y] + x;
+
+	PlantType	pt = pp->type;
+
 	pp->type = p;
 	pp->age = 0;
+
 
 	switch (p)
 	{
@@ -141,6 +148,8 @@ void plant_place(char x, char y, PlantType p)
 			pp->cool = 20;
 			pp->live = 5;
 			break;
+		case PT_SNOWPEA_0:
+		case PT_SNOWPEA_1:
 		case PT_PEASHOOTER_0:
 		case PT_PEASHOOTER_1:
 		case PT_REPEATER_0:
@@ -170,28 +179,39 @@ void plant_place(char x, char y, PlantType p)
 			break;
 		case PT_PUFFSHROOM_0:
 		case PT_PUFFSHROOM_1:
+		case PT_FUMESHROOM_0:
+		case PT_FUMESHROOM_1:
 			pp->cool = 3;
 			pp->live = 5;
 			break;			
+		case PT_GRAVEDIGGER:
+			pp->type = PT_GRAVEDIGGER_0;
+			pp->cool = 20;
+			pp->live = 5;
+			break;
 	}
 
-	char i = plant_first[y];
-	if (i > x)
+	if (pt < PT_TOMBSTONE)
 	{
-		plant_first[y] = x;
-	}
-	else
-	{
-		char pi;
-		do 
+		char i = plant_first[y];
+		if (i > x)
 		{
-			pi = i;
-			i = plant_grid[y][i].next;
-		} while (i < x);
-		plant_grid[y][pi].next = x;
-	}
+			plant_first[y] = x;
+		}
+		else
+		{
+			char pi;
+			do 
+			{
+				__assume(i < 10);
+				pi = i;
+				i = plant_grid[y][i].next;
+			} while (i < x);
+			plant_grid[y][pi].next = x;
+		}
 
-	pp->next = i;
+		pp->next = i;
+	}
 
 	sidfx_play(2, SIDFXPlanted, 1);
 }
@@ -227,7 +247,7 @@ void menu_draw(char x, char t)
 
 	for(char i=0; i<4; i++)
 	{
-		for(char j=0; j<8*4; j++)
+		for(signed char j=31; j>=0; j--)
 			hdp[j] = sdp[j];
 		hdp += 320;
 		sdp += 8 * 4;
@@ -705,7 +725,7 @@ void shots_add(char x, char y, char t, ShotType type)
 	}
 }
 
-const char shot_colors[3] = {VCOL_YELLOW, VCOL_LT_BLUE, VCOL_PURPLE};
+const char shot_colors[4] = {VCOL_YELLOW, VCOL_LT_BLUE, VCOL_PURPLE, VCOL_MED_GREY};
 
 void shots_advance(char step)
 {
@@ -714,19 +734,25 @@ void shots_advance(char step)
 	while (s != 0xff)
 	{
 		shot_clear(shots[s].x, shots[s].y);
+
+		char sstep = step;
+		if (shots[s].type == ST_FUME)
+			sstep <<= 2;
+
 		char n = shots[s].next;
-		shots[s].x += step;
+		shots[s].x += sstep;
 		char y = shots[s].y >> 2;
 		char x = shots[s].x + 20;
 
 		bool	keep = true;
 
-		if (shots[s].t < step)
+
+		if (shots[s].t < sstep)
 			keep = false;
 		else
 		{
-			shots[s].t -= step;
-			if (zombies_left[y] <= x)
+			shots[s].t -= sstep;
+			if (zombies_left[y] <= x && shots[s].type != ST_FUME)
 			{
 
 				char z = zombies_first[y];
@@ -734,9 +760,11 @@ void shots_advance(char step)
 				{
 					if (zombies[z].x <= x && zombies[z].x > x - 10 && zombies[z].live > 0)
 					{
-						if (shots[s].type == ST_FROST)
+						if (shots[s].type == ST_FROST && zombies[z].type != ZOMBIE_SCREENDOOR)
 							zombies[z].frozen = 3;
 						zombies[z].live -= 2;
+						zombies[z].frozen |= 0x80;
+
 						keep = false;
 						sidfx_play(2, SIDFXZombieHit, 1);
 						break;
@@ -821,12 +849,26 @@ void plants_iterate(char y)
 					}
 					break;
 
+				case PT_FUMESHROOM_0:
+				case PT_FUMESHROOM_1:
+					if (s < right && s + 4 >= left)
+					{
+						p->cool = 8;
+						shots_add(16 * s + 12, 4 * y + 1, 48, ST_FUME);
+						shots_add(16 * s + 22, 4 * y + 1, 32, ST_FUME);
+						shots_add(16 * s + 18, 4 * y + 0, 42, ST_FUME);
+						shots_add(16 * s + 14, 4 * y + 2, 36, ST_FUME);
+						zombies_fume(16 * s + 16, y, 64);
+					}
+					break;
+
 				case PT_POTATOMINE_HIDDEN:
 					p->cool = 4;
 					p->type = PT_POTATOMINE_0;
 					plant_draw(s, y);
 					break;
 
+				case PT_GRAVEDIGGER_0:
 				case PT_EXPLOSION_3:
 				case PT_POTATOMINE_EXPLODED:
 					p->type = back_tile;
@@ -964,6 +1006,9 @@ PlantType	plant_anim_tab[NUM_PLANT_TYPES] = {
 
 	[PT_SUNSHROOM_BIG_0] = PT_SUNSHROOM_BIG_1,
 	[PT_SUNSHROOM_BIG_1] = PT_SUNSHROOM_BIG_0,
+
+	[PT_FUMESHROOM_0] = PT_FUMESHROOM_1,
+	[PT_FUMESHROOM_1] = PT_FUMESHROOM_0,
 };
 
 void plants_animate(char y)

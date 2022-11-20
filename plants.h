@@ -58,6 +58,12 @@ enum PlantType
 	PT_SUNSHROOM_BIG_0,
 	PT_SUNSHROOM_BIG_1,
 
+	PT_FUMESHROOM_0,
+	PT_FUMESHROOM_1,
+
+	PT_GRAVEDIGGER_0,
+	PT_GRAVEDIGGER,
+
 	NUM_PLANT_TYPES
 };
 
@@ -74,7 +80,8 @@ enum ShotType
 {
 	ST_PEA,
 	ST_FROST,
-	ST_PUFF
+	ST_PUFF,
+	ST_FUME
 };
 
 struct Shot

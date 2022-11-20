@@ -12,7 +12,8 @@ enum ZombieType
 	ZOMBIE_VAULT,
 	ZOMBIE_BUCKET,
 	ZOMBIE_PAPER,
-	ZOMBIE_ANGRY
+	ZOMBIE_ANGRY,
+	ZOMBIE_SCREENDOOR,
 };
 
 struct Zombie
@@ -44,6 +45,8 @@ void zombies_set_msbx(char mask, char val);
 void zombies_advance(char y);
 
 void zombies_splash(char x, char y, char w, char damage);
+
+void zombies_fume(char x, char y, char w);
 
 bool zombies_done(void);
 
