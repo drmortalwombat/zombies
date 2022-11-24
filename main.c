@@ -12,6 +12,7 @@
 #include "plants.h"
 #include "zombies.h"
 #include "levels.h"
+#include "lawnmower.h"
 
 #pragma region( main, 0x0900, 0x9800, , , {code, data, bss, heap, stack} )
 #pragma stacksize(1024)
@@ -19,10 +20,11 @@
 signed char cursorX, cursorY, menuX;
 unsigned	sun_count;
 
-void cusor_show(char x, char y)
+void cursor_show(char x, char y)
 {
 	spr_set(6, true, 24 + x * 32, 50 + 8 * 5 + y * 32, 16 + 108, VCOL_WHITE, false, true, true);
 }
+
 
 void cursor_move(signed char dx, signed char dy)
 {
@@ -164,7 +166,8 @@ void game_level_loop(void)
 
 		shots_advance(step);
 
-		sun_advance();
+		if (!mower_advance())
+			sun_advance();
 
 		if (!(level->flags & LF_CONVEYOR) && !(level->flags & LF_NIGHT))
 		{
@@ -225,6 +228,10 @@ void game_level_loop(void)
 			case KSCAN_SPACE | KSCAN_QUAL_DOWN:
 				cursor_select();
 				break;
+
+			case KSCAN_M | KSCAN_QUAL_DOWN:
+				mower_start(cursorY);
+				break;
 		}
 
 		joy_poll(0);
@@ -267,7 +274,7 @@ int main(void)
 {
 	display_init();
 
-	for(char level=12; level<13; level++)
+	for(char level=13; level<14; level++)
 	{
 		shots_init();
 		zombies_init();
@@ -275,7 +282,7 @@ int main(void)
 		level_start(GameLevels[level]);
 
 		menu_set(1);
-		cusor_show(0, 0);
+		cursor_show(0, 0);
 		cursor_move(0, 0);
 
 		for(char y=0; y<5; y++)

@@ -6,7 +6,10 @@
 void zombies_init(void)
 {
 	for(char i=0; i<5; i++)
+	{
 		zombies_first[i] = 0xff;
+		zombies_count[i] = 0;
+	}
 
 	for(char i=0; i<31; i++)
 		zombies[i].next = i + 1;
@@ -15,9 +18,9 @@ void zombies_init(void)
 	zombies_free = 0;
 }
 
-void zombies_add(char x, char y, ZombieType type)
+bool zombies_add(char x, char y, ZombieType type)
 {
-	if (zombies_free != 0xff)
+	if (zombies_free != 0xff && zombies_count[y] < 6)
 	{
 		char	s = zombies_free;
 		zombies_free = zombies[s].next;
@@ -47,13 +50,22 @@ void zombies_add(char x, char y, ZombieType type)
 			case ZOMBIE_SCREENDOOR:
 				zombies[s].live = 117;
 				break;
+			case ZOMBIE_FOOTBALL:
+				zombies[s].live = 127;
+				zombies[s].speed *= 2;
+				break;
 		}
 		zombies[s].frozen = 0;
 		zombies[s].type = type;
 
 		zombies[s].next = zombies_first[y];
 		zombies_first[y] = s;
+		zombies_count[y]++;
+
+		return true;
 	}
+	else
+		return false;
 }
 
 char	zombies_msbx[5];
@@ -85,16 +97,24 @@ void zombies_set_msbx(char mask, char val)
 	}
 }
 
+void zombie_damage(char s, char damage)
+{
+	int live = zombies[s].live - damage;
+	if (live < -128)
+		live = -128;
+	zombies[s].live = live;
+	
+	zombies[s].frozen |= 0x80;
+}
+
 void zombies_splash(char x, char y, char w, char damage)
 {
 	char s = zombies_first[y];
 	while (s != 0xff)
 	{
 		if (zombies[s].x < x + w && zombies[s].x + w >= x)
-		{
-			zombies[s].live -= damage;
-			zombies[s].frozen |= 0x80;
-		}
+			zombie_damage(s, damage);
+
 		s = zombies[s].next;
 	}
 }
@@ -107,10 +127,9 @@ void zombies_fume(char x, char y, char w)
 		if (zombies[s].x < x + w && zombies[s].x >= x)
 		{
 			if (zombies[s].type == ZOMBIE_SCREENDOOR)
-				zombies[s].live -= 12;
+				zombie_damage(s, 12);
 			else
-				zombies[s].live -= 2;
-			zombies[s].frozen |= 0x80;
+				zombie_damage(s, 2);
 		}
 		s = zombies[s].next;
 	}	
@@ -146,6 +165,7 @@ void zombies_advance(char y)
 				case ZOMBIE_CONE:
 				case ZOMBIE_BUCKET:
 				case ZOMBIE_SCREENDOOR:
+				case ZOMBIE_FOOTBALL:
 					zombies[s].type = ZOMBIE_BASE;
 					zombies[s].live += 20;
 					break;
@@ -251,6 +271,9 @@ void zombies_advance(char y)
 
 		if (zombies[s].type != ZOMBIE_NONE && zombies[s].x > 0)
 		{
+			if (zombies[s].x < 12 && mower_start(y))
+				zombies[s].x = 12;
+
 			if (zombies[s].x < left)
 				left = zombies[s].x;
 			if (zombies[s].x > right)
@@ -290,6 +313,9 @@ void zombies_advance(char y)
 				 	case ZOMBIE_SCREENDOOR:
 				 		img += 60 + 16;
 				 		break;
+				 	case ZOMBIE_FOOTBALL:
+				 		img += 70 + 16;
+				 		break;
 				}
 
 				rirq_data(zombieMux[y], 1 * ZOMBIE_SPRITES + nz, x & 0xff);
@@ -305,6 +331,7 @@ void zombies_advance(char y)
 		}
 		else
 		{
+			zombies_count[y]--;
 			if (p == 0xff)
 				zombies_first[y] = n;
 			else

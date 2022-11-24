@@ -14,6 +14,7 @@ enum ZombieType
 	ZOMBIE_PAPER,
 	ZOMBIE_ANGRY,
 	ZOMBIE_SCREENDOOR,
+	ZOMBIE_FOOTBALL
 };
 
 struct Zombie
@@ -29,14 +30,14 @@ struct Zombie
 };
 
 extern __striped Zombie	zombies[32];
-extern char		zombies_first[5], zombies_free;
+extern char		zombies_first[5], zombies_free, zombies_count[5];
 extern char		zombies_left[5], zombies_right[5];
 
 #pragma align(zombies, 256)
 
 void zombies_init(void);
 
-void zombies_add(char x, char y, ZombieType type);
+bool zombies_add(char x, char y, ZombieType type);
 
 void zombies_grave(ZombieType type);
 

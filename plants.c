@@ -181,6 +181,8 @@ void plant_place(char x, char y, PlantType p)
 		case PT_PUFFSHROOM_1:
 		case PT_FUMESHROOM_0:
 		case PT_FUMESHROOM_1:
+		case PT_SCAREDYSHROOM_0:
+		case PT_SCAREDYSHROOM_1:
 			pp->cool = 3;
 			pp->live = 5;
 			break;			
@@ -542,12 +544,26 @@ void sun_add(char x, char y, char vy, char power)
 	sidfx_play(2, SIDFXSunshine, 4);
 }
 
+void plant_clear_mower(char y)
+{
+	char * hdp = Hires + 5 * 320 + 320 * 4 * y;
+	const char * sdp = PlantsHiresData + 8 * 16 * PT_FLOORSPACE;
+
+	for(char i=0; i<4; i++)
+	{
+		for(char j=0; j<8*2; j++)
+			hdp[j] = sdp[j + 16];
+		hdp += 320;
+		sdp += 8 * 4;
+	}	
+}
+
 void plant_draw_borders(void)
 {
 	for(char y=0; y<5; y++)
 	{
 		char * hdp = Hires + 5 * 320 + 320 * 4 * y;
-		const char * sdp = PlantsHiresData + 8 * 16 * PT_FLOORSPACE;
+		const char * sdp = PlantsHiresData + 8 * 16 * PT_FLOORSPACE_MOWER;
 
 		for(char i=0; i<4; i++)
 		{
@@ -567,10 +583,10 @@ void plant_draw_borders(void)
 			#pragma unroll(full)
 			for(char j=0; j<2; j++)
 			{
-				cdp[j] = PlantsColor0Data[16 * PT_FLOORSPACE + 4 * i + j + 2];
-				hdp[j] = plant_color_map(PlantsColor1Data[16 * PT_FLOORSPACE + 4 * i + j + 2]);
-				cdp[j + 38] = PlantsColor0Data[16 * PT_FLOORSPACE + 4 * i + j];
-				hdp[j + 38] = plant_color_map(PlantsColor1Data[16 * PT_FLOORSPACE + 4 * i + j]);
+				cdp[j] = PlantsColor0Data[16 * PT_FLOORSPACE_MOWER + 4 * i + j + 2];
+				hdp[j] = plant_color_map(PlantsColor1Data[16 * PT_FLOORSPACE_MOWER + 4 * i + j + 2]);
+				cdp[j + 38] = PlantsColor0Data[16 * PT_FLOORSPACE_MOWER + 4 * i + j];
+				hdp[j + 38] = plant_color_map(PlantsColor1Data[16 * PT_FLOORSPACE_MOWER + 4 * i + j]);
 			}
 			cdp += 40;
 			hdp += 40;
@@ -714,6 +730,9 @@ void shots_add(char x, char y, char t, ShotType type)
 {
 	if (shots_free != 0xff)
 	{
+		if (x + t > 144)
+			t = 144 - x;
+
 		char	s = shots_free;
 		shots_free = shots[s].next;
 		shots[s].x = x;
@@ -792,6 +811,32 @@ void shots_advance(char step)
 	}
 }
 
+bool plant_scared_row(char x, char y)
+{
+	if (zombies_left[y] < x + 48 && zombies_right[y] + 8 >= x)
+	{
+		char s = zombies_first[y];
+		while (s != 0xff)
+		{
+			if (zombies[s].x < x + 48 && zombies[s].x + 8 >= x)
+				return true;
+			s = zombies[s].next;
+		}
+	}
+
+	return false;
+}
+
+bool plant_scared(char x, char y)
+{
+	x *= 16;
+
+	return 
+		plant_scared_row(x, y) || 
+		y > 0 && plant_scared_row(x, y - 1) ||
+		y < 4 && plant_scared_row(x, y + 1);
+}
+
 void plants_iterate(char y)
 {
 	char ps = 0xff;
@@ -817,7 +862,7 @@ void plants_iterate(char y)
 					if (s < right)
 					{
 						p->cool = 8;
-						shots_add(16 * s + 12, 4 * y + 1, 132 - 16 * s, ST_PEA);
+						shots_add(16 * s + 12, 4 * y + 1, 255, ST_PEA);
 					}
 					break;
 
@@ -826,8 +871,8 @@ void plants_iterate(char y)
 					if (s < right)
 					{
 						p->cool = 8;
-						shots_add(16 * s + 16, 4 * y + 1, 128 - 16 * s, ST_PEA);
-						shots_add(16 * s + 8, 4 * y + 1, 136 - 16 * s, ST_PEA);
+						shots_add(16 * s + 16, 4 * y + 1, 255, ST_PEA);
+						shots_add(16 * s + 8, 4 * y + 1, 255, ST_PEA);
 					}
 					break;
 
@@ -836,7 +881,7 @@ void plants_iterate(char y)
 					if (s < right)
 					{
 						p->cool = 8;
-						shots_add(16 * s + 12, 4 * y + 1, 132 - 16 * s, ST_FROST);
+						shots_add(16 * s + 12, 4 * y + 1, 255, ST_FROST);
 					}
 					break;
 
@@ -891,7 +936,7 @@ void plants_iterate(char y)
 					{
 						if (zombies[z].x <= x + 32 && zombies[z].x + 16 > x && zombies[z].live > 0)
 						{
-							zombies[z].live -= 80;
+							zombies[z].live = -80;
 							p->type = PT_POTATOMINE_EXPLODED;
 							p->cool = 8;
 						}
@@ -965,6 +1010,32 @@ void plants_iterate(char y)
 					p->type = PT_EXPLOSION_3;
 					plant_draw(s, y);
 					break;
+
+				case PT_SCAREDYSHROOM_0:
+				case PT_SCAREDYSHROOM_1:
+					if (plant_scared(s, y))
+					{
+						p->type = PT_SCAREDYSHROOM_DUCK;
+						plant_draw(s, y);
+						p->cool = 4;
+					}
+					else if (s < right)
+					{
+						p->cool = 8;
+						shots_add(16 * s + 12, 4 * y + 1, 255, ST_PUFF);
+					}
+					else
+						p->cool = 4;
+					break;
+
+				case PT_SCAREDYSHROOM_DUCK:
+					if (!plant_scared(s, y))
+					{
+						p->type = PT_SCAREDYSHROOM_0;
+						plant_draw(s, y);
+					}
+					p->cool = 4;
+					break;
 			}
 		}
 
@@ -1009,6 +1080,10 @@ PlantType	plant_anim_tab[NUM_PLANT_TYPES] = {
 
 	[PT_FUMESHROOM_0] = PT_FUMESHROOM_1,
 	[PT_FUMESHROOM_1] = PT_FUMESHROOM_0,
+
+	[PT_SCAREDYSHROOM_0] = PT_SCAREDYSHROOM_1,
+	[PT_SCAREDYSHROOM_1] = PT_SCAREDYSHROOM_0,
+	
 };
 
 void plants_animate(char y)

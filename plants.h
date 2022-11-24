@@ -44,11 +44,6 @@ enum PlantType
 	PT_CHOMPER_EAT_0,
 	PT_CHOMPER_EAT_1,
 
-	PT_PEASHOOTER_NIGHT,
-	PT_FLOORSPACE,
-
-	PT_CONVEYOR,
-
 	PT_PUFFSHROOM_0,
 	PT_PUFFSHROOM_1,
 
@@ -63,6 +58,15 @@ enum PlantType
 
 	PT_GRAVEDIGGER_0,
 	PT_GRAVEDIGGER,
+
+	PT_SCAREDYSHROOM_0,
+	PT_SCAREDYSHROOM_1,
+
+	PT_SCAREDYSHROOM_DUCK,
+
+	PT_CONVEYOR,
+	PT_FLOORSPACE,
+	PT_FLOORSPACE_MOWER,
 
 	NUM_PLANT_TYPES
 };
@@ -141,6 +145,8 @@ void plant_draw(char x, char y);
 void plant_draw_field(char x, char y);
 
 void plant_draw_borders(void);
+
+void plant_clear_mower(char y);
 
 void plant_grid_clear(char rows);
 

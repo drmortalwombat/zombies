@@ -1,5 +1,6 @@
 #include "levels.h"
 #include "plants.h"
+#include "lawnmower.h"
 #include <c64/vic.h>
 
 const Level	*	level;
@@ -811,6 +812,38 @@ static const LevelCommand	LevelNightCmds4[] = {
 	LVC_END
 };
 
+static const LevelCommand	LevelNightCmds5[] = {
+	LVC_DELAY_20S | LVC_ZOMBIE_FOOTBALL,
+	LVC_DELAY_10F | LVC_ZOMBIE_SCREENDOOR,
+	LVC_DELAY_1S | LVC_ZOMBIE,
+	LVC_DELAY_10F | LVC_ZOMBIE,
+	LVC_DELAY_10F | LVC_ZOMBIE_CONE,
+	LVC_DELAY_10F | LVC_ZOMBIE,
+	LVC_DELAY_1S | LVC_ZOMBIE,
+	LVC_DELAY_10F | LVC_ZOMBIE,
+	LVC_DELAY_10F | LVC_ZOMBIE,
+	LVC_DELAY_5S | LVC_ZOMBIE_SCREENDOOR,
+	LVC_DELAY_10F | LVC_ZOMBIE,
+	LVC_DELAY_1S | LVC_ZOMBIE,
+	LVC_DELAY_10F | LVC_ZOMBIE_CONE,
+	LVC_DELAY_10F | LVC_ZOMBIE,
+	LVC_DELAY_10F | LVC_ZOMBIE,
+	LVC_DELAY_10F | LVC_ZOMBIE,
+	LVC_DELAY_1S | LVC_ZOMBIE,
+	LVC_DELAY_10F | LVC_ZOMBIE_SCREENDOOR,
+	LVC_DELAY_5S | LVC_ZOMBIE,
+	LVC_DELAY_10F | LVC_ZOMBIE,
+	LVC_DELAY_1S | LVC_ZOMBIE_CONE,
+	LVC_DELAY_10F | LVC_ZOMBIE,
+	LVC_DELAY_10F | LVC_ZOMBIE,
+	LVC_DELAY_1S | LVC_ZOMBIE,
+	LVC_DELAY_10F | LVC_ZOMBIE,
+	LVC_DELAY_20S | LVC_ZOMBIE_FOOTBALL,
+	LVC_DELAY_20S | LVC_ZOMBIE_FOOTBALL,
+
+	LVC_END
+};
+
 static const Level	LevelNight1 = {
 	0b11111,
 	LF_NIGHT,
@@ -851,6 +884,16 @@ static const Level	LevelNight4 = {
 	TUNE_GAME_4
 };
 
+static const Level	LevelNight5 = {
+	0b11111,
+	LF_NIGHT,
+	8,
+	50,
+	SF_PUFFSHROOM | SF_SUNSHROOM | SF_PEASHOOTER | SF_SHOVEL | SF_SNOWPEA | SF_FUMESHROOM | SF_GRAVEDIGGER | SF_SCAREDYSHROOM | SF_POTATOMINE,
+	LevelNightCmds5,
+	TUNE_GAME_5
+};
+
 const Level	*	GameLevels[] = {
 	&LevelDay1,
 	&LevelDay2,
@@ -867,6 +910,7 @@ const Level	*	GameLevels[] = {
 	&LevelNight2,
 	&LevelNight3,
 	&LevelNight4,
+	&LevelNight5,
 };
 
 void level_start(const Level * l)
@@ -909,6 +953,8 @@ void level_start(const Level * l)
 
 	menu_init();
 
+	mower_init();
+
 	unsigned	seeds = l->seeds;
 	if (l->flags & LF_CONVEYOR)
 	{
@@ -940,6 +986,8 @@ void level_start(const Level * l)
 			menu_add_item(PT_CHOMPER_0, 150, 17, false, false);
 		if (seeds & SF_FUMESHROOM)
 			menu_add_item(PT_FUMESHROOM_0, 75, 17, true, false);
+		if (seeds & SF_SCAREDYSHROOM)
+			menu_add_item(PT_SCAREDYSHROOM_0, 25, 17, true, false);
 		if (seeds & SF_GRAVEDIGGER)
 			menu_add_item(PT_GRAVEDIGGER, 75, 17, true, false);
 	}
@@ -1009,6 +1057,8 @@ void level_iterate(void)
 					menu_add_item_at(x, PT_SUNSHROOM_0, 0, 32, false, true);
 				else if (s & SF_FUMESHROOM)
 					menu_add_item_at(x, PT_FUMESHROOM_0, 0, 32, false, true);
+				else if (s & SF_SCAREDYSHROOM)
+					menu_add_item_at(x, PT_SCAREDYSHROOM_0, 0, 32, false, true);					
 				else if (s & SF_GRAVEDIGGER)
 					menu_add_item_at(x, PT_GRAVEDIGGER, 0, 32, false, true);
 			}
@@ -1070,39 +1120,50 @@ void level_iterate(void)
 			}
 			level_rows[31] = row;
 
+			bool	done = true;
+
 			switch (level->cmds[level_cmd] & 0x0f)
 			{
 				case LVC_ZOMBIE:
-					zombies_add(172, row, ZOMBIE_BASE);
+					done = zombies_add(172, row, ZOMBIE_BASE);
 					break;
 
 				case LVC_ZOMBIE_CONE:
-					zombies_add(172, row, ZOMBIE_CONE);
+					done = zombies_add(172, row, ZOMBIE_CONE);
 					break;			
 
 				case LVC_ZOMBIE_POLE:
-					zombies_add(172, row, ZOMBIE_POLE);
+					done = zombies_add(172, row, ZOMBIE_POLE);
 					break;			
 
 				case LVC_ZOMBIE_BUCKET:
-					zombies_add(172, row, ZOMBIE_BUCKET);
+					done = zombies_add(172, row, ZOMBIE_BUCKET);
 					break;			
 
 				case LVC_ZOMBIE_PAPER:
-					zombies_add(172, row, ZOMBIE_PAPER);
+					done = zombies_add(172, row, ZOMBIE_PAPER);
 					break;			
 
 				case LVC_ZOMBIE_SCREENDOOR:
-					zombies_add(172, row, ZOMBIE_SCREENDOOR);
+					done = zombies_add(172, row, ZOMBIE_SCREENDOOR);
 					break;			
+
+				case LVC_ZOMBIE_FOOTBALL:
+					done = zombies_add(172, row, ZOMBIE_FOOTBALL);
+					break;						
 
 				case LVC_ZOMBIE_GRAVES:
 					zombies_grave(ZOMBIE_BASE);
 					break;			
 			}
 
-			level_cmd++;				
-			menu_progress(level_cmd, level_size);
+			if (done)
+			{
+				level_cmd++;
+				menu_progress(level_cmd, level_size);
+			}
+			else
+				level_delay = 5;
 		}
 	}
 }
