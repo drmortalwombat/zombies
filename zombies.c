@@ -13,6 +13,22 @@ SIDFX	SIDFXZombieFume[1] = {{
 	10
 }};
 
+char	zombies_msbx[5];
+char	zombies_basemsbx;
+
+
+void zombies_clear(void)
+{
+	for(char y=0; y<5; y++)
+	{
+		for(char i=0; i < ZOMBIE_SPRITES; i++)
+			rirq_data(zombieMux[y], 1 * ZOMBIE_SPRITES + i, 0);
+
+		zombies_msbx[y] = 0;
+		rirq_data(zombieMux[y], 4 * ZOMBIE_SPRITES, zombies_basemsbx);	
+	}
+}
+
 void zombies_init(void)
 {
 	for(char i=0; i<5; i++)
@@ -77,9 +93,6 @@ bool zombies_add(char x, char y, ZombieType type)
 	else
 		return false;
 }
-
-char	zombies_msbx[5];
-char	zombies_basemsbx;
 
 void zombies_grave(ZombieType type)
 {
@@ -150,12 +163,13 @@ void zombies_fume(char x, char y, char w)
 		sidfx_play(2, SIDFXZombieFume, 1);
 }
 
-void zombies_advance(char y)
+bool zombies_advance(char y)
 {
 	char msbx = 0;
 	char nz = 0;
 
 	char	left = 0xff, right = 0;
+	bool	lost = false;
 
 	char	p = 0xff;
 	char s = zombies_first[y];
@@ -284,8 +298,11 @@ void zombies_advance(char y)
 			}
 		}
 
-		if (zombies[s].type != ZOMBIE_NONE && zombies[s].x > 0)
+		if (zombies[s].type != ZOMBIE_NONE)
 		{
+			if (zombies[s].x == 0)
+				lost = true;
+
 			if (zombies[s].x < 12 && mower_start(y))
 				zombies[s].x = 12;
 
@@ -370,6 +387,8 @@ void zombies_advance(char y)
 
 	zombies_left[y] = left;
 	zombies_right[y] = right;
+
+	return lost;
 }
 
 bool zombies_done(void)

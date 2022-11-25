@@ -299,7 +299,7 @@ void seeds_edit_menu(SeedFlags seeds)
 			case KSCAN_SPACE | KSCAN_QUAL_DOWN:
 				{
 					char si = my * 6 + mx;
-					if (si == 17)
+					if (si == 17 && menu_size == 7)
 						return;
 
 					if (si < numSeeds)

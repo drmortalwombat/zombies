@@ -128,13 +128,14 @@ void cursor_select(void)
 	}
 }
 
-void game_level_loop(void)
+bool game_level_loop(void)
 {
 	char	row = 0, warm = 0;
 	sun_count	= 500;
 
 	char	joydown = 0;
 	char	step = 1;
+	
 	for(;;)
 	{
 		char sirq = rirq_count;
@@ -142,7 +143,10 @@ void game_level_loop(void)
 		for(char i=0; i<step; i++)
 		{
 			if (row & 1)
-				zombies_advance(row >> 1);
+			{
+				if (zombies_advance(row >> 1))
+					return true;
+			}
 			else
 				plants_iterate(row >> 1);
 
@@ -152,7 +156,7 @@ void game_level_loop(void)
 				row = 0;
 				level_iterate();
 				if (level_complete() && zombies_done())
-					return;
+					return false;
 			}
 
 		}
@@ -274,7 +278,8 @@ int main(void)
 {
 	display_init();
 
-	for(char li=11; li<14; li++)
+	char li = 11;
+	for(;;)
 	{
 		sun_init();
 		shots_init();
@@ -287,15 +292,25 @@ int main(void)
 		cursor_move(0, 0);
 
 		music_patch_voice3(false);
-		game_level_loop();
+		bool lost = game_level_loop();
 		music_patch_voice3(true);
 
+		if (lost)
+		{
+			music_init(TUNE_LOST);
+		}
+		else
+		{
+			music_init(TUNE_VICTORY);
+			li++;
+		}
 
-		music_init(TUNE_VICTORY);
+		for(int i=0; i<240; i++)
+			vic_waitFrame();			
 
-		for(int i=0; i<190; i++)
-			vic_waitFrame();
 		music_active = false;
+
+		zombies_clear();
 	}
 
 
