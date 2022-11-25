@@ -13,6 +13,7 @@
 #include "zombies.h"
 #include "levels.h"
 #include "lawnmower.h"
+#include "seeds.h"
 
 #pragma region( main, 0x0900, 0x9800, , , {code, data, bss, heap, stack} )
 #pragma stacksize(1024)
@@ -90,7 +91,6 @@ void cursor_select(void)
 			case PT_SHOVEL:
 				if (menu[menuX].cool == 0 && plant_grid[cursorY][cursorX].type > PT_GROUND)
 				{
-					menu_cooldown(menuX);
 					plant_remove(cursorX, cursorY);
 					plant_draw(cursorX, cursorY);						
 				}
@@ -274,20 +274,17 @@ int main(void)
 {
 	display_init();
 
-	for(char level=13; level<14; level++)
+	for(char li=11; li<14; li++)
 	{
+		sun_init();
 		shots_init();
 		zombies_init();
 
-		level_start(GameLevels[level]);
+		level_start(GameLevels[li]);
 
 		menu_set(1);
 		cursor_show(0, 0);
 		cursor_move(0, 0);
-
-		for(char y=0; y<5; y++)
-			for(char x=0; x<9; x++)
-				plant_draw(x, y);
 
 		music_patch_voice3(false);
 		game_level_loop();
@@ -298,6 +295,7 @@ int main(void)
 
 		for(int i=0; i<190; i++)
 			vic_waitFrame();
+		music_active = false;
 	}
 
 

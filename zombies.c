@@ -1,7 +1,17 @@
 #include "zombies.h"
 #include "display.h"
 #include "plants.h"
+#include <audio/sidfx.h>
 
+SIDFX	SIDFXZombieFume[1] = {{
+	6000, 4096,
+	SID_CTRL_GATE | SID_CTRL_NOISE,
+	SID_ATK_2 | SID_DKY_6,
+	0xf0  | SID_DKY_240,
+	-400, 0,
+	2, 12,
+	10
+}};
 
 void zombies_init(void)
 {
@@ -121,6 +131,7 @@ void zombies_splash(char x, char y, char w, char damage)
 
 void zombies_fume(char x, char y, char w)
 {
+	bool	fume = false;
 	char s = zombies_first[y];
 	while (s != 0xff)
 	{
@@ -130,9 +141,13 @@ void zombies_fume(char x, char y, char w)
 				zombie_damage(s, 12);
 			else
 				zombie_damage(s, 2);
+			fume = true;
 		}
 		s = zombies[s].next;
 	}	
+
+	if (fume)
+		sidfx_play(2, SIDFXZombieFume, 1);
 }
 
 void zombies_advance(char y)

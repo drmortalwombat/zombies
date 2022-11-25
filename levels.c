@@ -498,7 +498,7 @@ static const LevelCommand	LevelDayCmds10[] = {
 
 static const Level	LevelDay1 = {
 	0b00100,
-	LF_DAY,
+	LF_DAY | LF_FIXSEED,
 	0,
 	300,
 	SF_PEASHOOTER,
@@ -508,7 +508,7 @@ static const Level	LevelDay1 = {
 
 static const Level	LevelDay2 = {
 	0b01110,
-	LF_DAY,
+	LF_DAY | LF_FIXSEED,
 	0,
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER,
@@ -518,7 +518,7 @@ static const Level	LevelDay2 = {
 
 static const Level	LevelDay3 = {
 	0b01110,
-	LF_DAY,
+	LF_DAY | LF_FIXSEED,
 	0,
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB,
@@ -528,7 +528,7 @@ static const Level	LevelDay3 = {
 
 static const Level	LevelDay4 = {
 	0b11111,
-	LF_DAY,
+	LF_DAY | LF_FIXSEED,
 	0,
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT,
@@ -538,50 +538,50 @@ static const Level	LevelDay4 = {
 
 static const Level	LevelDay6 = {
 	0b11111,
-	LF_DAY,
+	LF_DAY | LF_SHOVEL | LF_FIXSEED,
 	0,
 	50,
-	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SHOVEL,
+	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE,
 	LevelDayCmds6,
 	TUNE_GAME_3
 };
 
 static const Level	LevelDay7 = {
 	0b11111,
-	LF_DAY,
+	LF_DAY | LF_SHOVEL | LF_FIXSEED,
 	0,
 	50,
-	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_SHOVEL,
+	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA,
 	LevelDayCmds7,
 	TUNE_GAME_2
 };
 
 static const Level	LevelDay8 = {
 	0b11111,
-	LF_DAY,
+	LF_DAY | LF_SHOVEL,
 	0,
 	50,
-	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_SHOVEL,
+	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER,
 	LevelDayCmds8,
 	TUNE_GAME_1
 };
 
 static const Level	LevelDay9 = {
 	0b11111,
-	LF_DAY,
+	LF_DAY | LF_SHOVEL,
 	0,
 	50,
-	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_SHOVEL,
+	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER,
 	LevelDayCmds9,
 	TUNE_GAME_3
 };
 
 static const Level	LevelDay10 = {
 	0b11111,
-	LF_DAY | LF_CONVEYOR,
+	LF_DAY | LF_CONVEYOR | LF_SHOVEL,
 	0,
 	50,
-	SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_SHOVEL,
+	SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER,
 	LevelDayCmds10,
 	TUNE_GAME_2
 };
@@ -846,50 +846,50 @@ static const LevelCommand	LevelNightCmds5[] = {
 
 static const Level	LevelNight1 = {
 	0b11111,
-	LF_NIGHT,
+	LF_NIGHT | LF_SHOVEL,
 	4,
 	50,
-	SF_SUNFLOWER | SF_PUFFSHROOM | SF_PEASHOOTER | SF_SHOVEL,
+	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_PUFFSHROOM,
 	LevelNightCmds1,
 	TUNE_GAME_4
 };
 
 static const Level	LevelNight2 = {
 	0b11111,
-	LF_NIGHT,
+	LF_NIGHT | LF_SHOVEL,
 	4,
 	50,
-	SF_PUFFSHROOM | SF_SUNSHROOM | SF_PEASHOOTER | SF_SHOVEL,
+	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_PUFFSHROOM | SF_SUNSHROOM,
 	LevelNightCmds2,
 	TUNE_GAME_5
 };
 
 static const Level	LevelNight3 = {
 	0b11111,
-	LF_NIGHT,
+	LF_NIGHT | LF_SHOVEL,
 	4,
 	50,
-	SF_PUFFSHROOM | SF_SUNSHROOM | SF_PEASHOOTER | SF_SHOVEL | SF_SNOWPEA | SF_FUMESHROOM,
+	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_PUFFSHROOM | SF_SUNSHROOM| SF_FUMESHROOM,
 	LevelNightCmds3,
 	TUNE_GAME_6
 };
 
 static const Level	LevelNight4 = {
 	0b11111,
-	LF_NIGHT,
+	LF_NIGHT | LF_SHOVEL,
 	8,
 	50,
-	SF_PUFFSHROOM | SF_SUNSHROOM | SF_PEASHOOTER | SF_SHOVEL | SF_SNOWPEA | SF_FUMESHROOM | SF_GRAVEDIGGER,
+	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_PUFFSHROOM | SF_SUNSHROOM| SF_FUMESHROOM | SF_GRAVEDIGGER,
 	LevelNightCmds4,
 	TUNE_GAME_4
 };
 
 static const Level	LevelNight5 = {
 	0b11111,
-	LF_NIGHT,
+	LF_NIGHT | LF_SHOVEL,
 	8,
 	50,
-	SF_PUFFSHROOM | SF_SUNSHROOM | SF_PEASHOOTER | SF_SHOVEL | SF_SNOWPEA | SF_FUMESHROOM | SF_GRAVEDIGGER | SF_SCAREDYSHROOM | SF_POTATOMINE,
+	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_PUFFSHROOM | SF_SUNSHROOM| SF_FUMESHROOM | SF_GRAVEDIGGER | SF_SCAREDYSHROOM,
 	LevelNightCmds5,
 	TUNE_GAME_5
 };
@@ -955,46 +955,6 @@ void level_start(const Level * l)
 
 	mower_init();
 
-	unsigned	seeds = l->seeds;
-	if (l->flags & LF_CONVEYOR)
-	{
-		for(char i=0; i<9; i++)
-			menu_add_item(PT_CONVEYOR, 0, 0, false, false);
-	}
-	else
-	{
-		menu_add_item(PT_SUN, l->sun, 0, true, false);
-		if (seeds & SF_SUNFLOWER)
-			menu_add_item(PT_SUNFLOWER_0, 50, 17, true, false);
-		if (seeds & SF_SUNSHROOM)
-			menu_add_item(PT_SUNSHROOM_0, 25, 17, true, false);
-		if (seeds & SF_PUFFSHROOM)
-			menu_add_item(PT_PUFFSHROOM_0, 0, 17, true, false);
-		if (seeds & SF_PEASHOOTER)
-			menu_add_item(PT_PEASHOOTER_0, 100, 17, true, false);
-		if (seeds & SF_SNOWPEA)
-			menu_add_item(PT_SNOWPEA_0, 175, 17, false, false);
-		if (seeds & SF_WALLNUT)
-			menu_add_item(PT_WALLNUT_0, 50, 6, false, false);
-		if (seeds & SF_POTATOMINE)
-			menu_add_item(PT_POTATOMINE_0, 25, 6, false, false);
-		if (seeds & SF_REPEATER)
-			menu_add_item(PT_REPEATER_0, 200, 17, false, false);
-		if (seeds & SF_CHERRYBOMB)
-			menu_add_item(PT_CHERRYBOMB, 150, 3, false, false);
-		if (seeds & SF_CHOMPER)
-			menu_add_item(PT_CHOMPER_0, 150, 17, false, false);
-		if (seeds & SF_FUMESHROOM)
-			menu_add_item(PT_FUMESHROOM_0, 75, 17, true, false);
-		if (seeds & SF_SCAREDYSHROOM)
-			menu_add_item(PT_SCAREDYSHROOM_0, 25, 17, true, false);
-		if (seeds & SF_GRAVEDIGGER)
-			menu_add_item(PT_GRAVEDIGGER, 75, 17, true, false);
-	}
-
-	if (seeds & SF_SHOVEL)
-		menu_add_item(PT_SHOVEL, 0, 17, false, false);
-
 	plant_grid_clear(l->rows);
 
 	for(char i=0; i<l->graves; i++)
@@ -1008,9 +968,61 @@ void level_start(const Level * l)
 		plant_place(x, y, PT_TOMBSTONE);
 	}
 
-
+	plant_grid_draw();
 
 	menu_progress(0, level_size);
+
+	unsigned	seeds = l->seeds;
+	if (l->flags & LF_CONVEYOR)
+	{
+		for(char i=0; i<9; i++)
+			menu_add_item(PT_CONVEYOR, 0, 0, false, false);
+
+		if (l->flags & LF_SHOVEL)
+			menu_add_item(PT_SHOVEL, 0, 0, true, false);
+	}
+	else
+	{
+		menu_add_item(PT_SUN, l->sun, 0, true, false);
+		if (l->flags & LF_FIXSEED)
+		{
+			if (seeds & SF_SUNFLOWER)
+				menu_add_item(PT_SUNFLOWER_0, 50, 17, true, false);
+			if (seeds & SF_SUNSHROOM)
+				menu_add_item(PT_SUNSHROOM_0, 25, 17, true, false);
+			if (seeds & SF_PUFFSHROOM)
+				menu_add_item(PT_PUFFSHROOM_0, 0, 17, true, false);
+			if (seeds & SF_PEASHOOTER)
+				menu_add_item(PT_PEASHOOTER_0, 100, 17, true, false);
+			if (seeds & SF_SNOWPEA)
+				menu_add_item(PT_SNOWPEA_0, 175, 17, false, false);
+			if (seeds & SF_WALLNUT)
+				menu_add_item(PT_WALLNUT_0, 50, 6, false, false);
+			if (seeds & SF_POTATOMINE)
+				menu_add_item(PT_POTATOMINE_0, 25, 6, false, false);
+			if (seeds & SF_REPEATER)
+				menu_add_item(PT_REPEATER_0, 200, 17, false, false);
+			if (seeds & SF_CHERRYBOMB)
+				menu_add_item(PT_CHERRYBOMB, 150, 3, false, false);
+			if (seeds & SF_CHOMPER)
+				menu_add_item(PT_CHOMPER_0, 150, 17, false, false);
+			if (seeds & SF_FUMESHROOM)
+				menu_add_item(PT_FUMESHROOM_0, 75, 17, true, false);
+			if (seeds & SF_SCAREDYSHROOM)
+				menu_add_item(PT_SCAREDYSHROOM_0, 25, 17, true, false);
+			if (seeds & SF_GRAVEDIGGER)
+				menu_add_item(PT_GRAVEDIGGER, 75, 17, true, false);
+		}
+		else
+		{
+			seeds_edit_menu(seeds);
+			plant_grid_draw();
+		}
+
+		if (l->flags & LF_SHOVEL)
+			menu_add_item(PT_SHOVEL, 0, 0, true, false);
+	}
+
 
 	music_init(l->tune);
 
@@ -1033,7 +1045,7 @@ void level_iterate(void)
 				unsigned	s = 0;
 				do {
 					s = 1 << (rand() & 15);
-				} while ((s == SF_SHOVEL) || !(level->seeds & s));
+				} while (!(level->seeds & s));
 
 				if (s & SF_SUNFLOWER)
 					menu_add_item_at(x, PT_SUNFLOWER_0, 0, 32, false, true);

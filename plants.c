@@ -114,6 +114,13 @@ static inline char plant_color_map(char c)
 }
 
 
+void plant_grid_draw(void)
+{
+	for(char y=0; y<5; y++)
+		for(char x=0; x<9; x++)
+			plant_draw(x, y);
+}
+
 void plant_grid_clear(char rows)
 {
 	for(char y=0; y<5; y++)
@@ -271,7 +278,7 @@ void menu_draw(char x, char t)
 	}	
 }
 
-static const char colory_grey[16] = {
+const char color_grey[16] = {
 	VCOL_BLACK,
 	VCOL_WHITE,
 	VCOL_DARK_GREY,
@@ -311,9 +318,9 @@ void menu_cooldown(char x)
 			#pragma unroll(full)
 			for(char j=0; j<4; j++)
 			{
-				cdp[j] = colory_grey[PlantsColor0Data[16 * t + 4 * i + j] & 0x0f];
+				cdp[j] = color_grey[PlantsColor0Data[16 * t + 4 * i + j] & 0x0f];
 				char c = plant_color_map(PlantsColor1Data[16 * t + 4 * i + j]);
-				hdp[j] = colory_grey[c & 0x0f] | (colory_grey[c >> 4] << 4);
+				hdp[j] = color_grey[c & 0x0f] | (color_grey[c >> 4] << 4);
 			}
 			cdp += 40;
 			hdp += 40;
@@ -397,6 +404,19 @@ void menu_draw_price(char x, unsigned v)
 
 }
 
+void menu_clear_price(char x)
+{
+	const char * sdp = DigitsHiresData + 80;
+
+	char * hdp = Hires + 4 * 320 + 32 * x;
+	for(char i=0; i<4; i++)
+	{
+		for(char j=0; j<8; j++)
+			hdp[j] = sdp[j];
+		hdp += 8;
+	}	
+}
+
 void menu_progress(char p, char m)
 {
 	char * hdp = Screen + 4 * 40;
@@ -415,7 +435,8 @@ void menu_progress(char p, char m)
 
 void menu_init(void)
 {
-	memset(Hires, 0, 320 * 4);
+	for(char i=0; i<10; i++)
+		menu_draw(i, PT_CARDSLOT);
 	menu_size = 0;
 	menu_first = 0;
 }
@@ -450,6 +471,33 @@ void menu_add_item(PlantType type, unsigned price, char warm, bool ready, bool o
 	menu_size++;
 }
 
+void menu_remove_item(PlantType type)
+{
+	char	x = 0;
+	while (x < menu_size && menu[x].type != type)
+		x++;
+	if (x < menu_size)
+	{
+		menu_size--;
+		while (x < menu_size)
+		{
+			menu[x].type = menu[x + 1].type;
+			menu[x].price = menu[x + 1].price;
+			menu[x].warm = menu[x + 1].warm;
+			menu[x].cool = menu[x + 1].cool;
+			menu[x].once = false;
+			menu_draw(x, menu[x].type);
+			if (menu[x].cool != 0)
+				menu_cooldown(x);	
+			menu[x].once = menu[x + 1].once;
+			menu_draw_price(x, menu[x].price);
+			x++;			
+		}
+		menu_draw(x, PT_CARDSLOT);
+		menu_clear_price(x);
+	}
+}
+
 void menu_warmup(void)
 {
 	for(char i=menu_first; i<menu_size; i++)
@@ -472,6 +520,12 @@ void menu_warmup(void)
 			}
 		}
 	}
+}
+
+void sun_init(void)
+{
+	sun_active = false;
+	spr_show(7, false);
 }
 
 void sun_advance(void)

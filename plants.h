@@ -68,6 +68,10 @@ enum PlantType
 	PT_FLOORSPACE,
 	PT_FLOORSPACE_MOWER,
 
+	PT_BORDER,
+	PT_CARDSLOT,
+	PT_GO,
+
 	NUM_PLANT_TYPES
 };
 
@@ -114,9 +118,12 @@ extern bool		sun_active;
 extern char		sun_power;
 extern char		back_color;
 extern char		back_tile;
+extern const char color_grey[16];
 
 #pragma align(plant_grid, 256)
 #pragma align(shots, 256)
+
+void sun_init(void);
 
 void sun_advance(void);
 
@@ -126,6 +133,8 @@ void menu_draw(char x, char t);
 
 void menu_draw_price(char x, unsigned v);
 
+void menu_clear_price(char x);
+
 void menu_init(void);
 
 void menu_cooldown(char x);
@@ -133,6 +142,8 @@ void menu_cooldown(char x);
 void menu_warmup(void);
 
 void menu_add_item(PlantType type, unsigned price, char warm, bool ready, bool once);
+
+void menu_remove_item(PlantType type);
 
 void menu_add_item_at(char x, PlantType type, unsigned price, char warm, bool ready, bool once);
 
@@ -149,6 +160,8 @@ void plant_draw_borders(void);
 void plant_clear_mower(char y);
 
 void plant_grid_clear(char rows);
+
+void plant_grid_draw(void);
 
 void plant_place(char x, char y, PlantType p);
 
