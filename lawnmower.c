@@ -35,28 +35,26 @@ void mower_init(void)
 
 bool mower_start(char y)
 {
-	if (y == mowerY)
-		return true;
-	else if (!mowers[y])
-		return false;
-	else 
+	if (mowerX == 0)
 	{
-		if (mowerX == 0)
-		{
-			mowers[y] = false;
-		
-			mowerY = y;
-			mowerX = 1;
+		if (!mowers[y])
+			return false;
 
-			char sy = 50 + 49 + y * 32;
+		mowers[y] = false;
+	
+		mowerY = y;
+		mowerX = 1;
 
-			spr_set(7, true, 12, sy, 16 + 104, VCOL_ORANGE, true, false, false);	
-			zombies_set_msbx(0x80, 0x00);
-			plant_clear_mower(y);
-		}
+		char sy = 50 + 49 + y * 32;
 
-		return true;
+		spr_set(7, true, 12, sy, 16 + 104, VCOL_ORANGE, true, false, false);	
+		zombies_set_msbx(0x80, 0x00);
+		plant_clear_mower(y);
 	}
+	else if (y != mowerY && !mowers[y])
+		return false;
+
+	return true;
 }
 
 bool mower_advance(void)

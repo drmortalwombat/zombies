@@ -16,10 +16,6 @@ const char PlantsColor1Data[] = {
 	#embed ctm_attr2 "plants.ctm"
 };
 
-const char DigitsHiresData[] = {
-	#embed ctm_chars "digits.ctm"
-};
-
 #pragma align(PlantsHiresData, 256)
 #pragma align(PlantsColor0Data, 256)
 #pragma align(PlantsColor1Data, 256)
@@ -62,35 +58,6 @@ SIDFX	SIDFXExplosion[1] = {{
 	30
 }};
 
-__striped char * HiresTab[25] = {
-	Hires +  0 * 320, Hires +  1 * 320, Hires +  2 * 320, Hires +  3 * 320,
-	Hires +  4 * 320, Hires +  5 * 320, Hires +  6 * 320, Hires +  7 * 320,
-	Hires +  8 * 320, Hires +  9 * 320, Hires + 10 * 320, Hires + 11 * 320,
-	Hires + 12 * 320, Hires + 13 * 320, Hires + 14 * 320, Hires + 15 * 320,
-	Hires + 16 * 320, Hires + 17 * 320, Hires + 18 * 320, Hires + 19 * 320,
-	Hires + 20 * 320, Hires + 21 * 320, Hires + 22 * 320, Hires + 23 * 320,
-	Hires + 24 * 320
-};
-
-__striped char * ColorTab[25] = {
-	Color +  0 * 40, Color +  1 * 40, Color +  2 * 40, Color +  3 * 40,
-	Color +  4 * 40, Color +  5 * 40, Color +  6 * 40, Color +  7 * 40,
-	Color +  8 * 40, Color +  9 * 40, Color + 10 * 40, Color + 11 * 40,
-	Color + 12 * 40, Color + 13 * 40, Color + 14 * 40, Color + 15 * 40,
-	Color + 16 * 40, Color + 17 * 40, Color + 18 * 40, Color + 19 * 40,
-	Color + 20 * 40, Color + 21 * 40, Color + 22 * 40, Color + 23 * 40,
-	Color + 24 * 40
-};
-
-__striped char * ScreenTab[25] = {
-	Screen +  0 * 40, Screen +  1 * 40, Screen +  2 * 40, Screen +  3 * 40,
-	Screen +  4 * 40, Screen +  5 * 40, Screen +  6 * 40, Screen +  7 * 40,
-	Screen +  8 * 40, Screen +  9 * 40, Screen + 10 * 40, Screen + 11 * 40,
-	Screen + 12 * 40, Screen + 13 * 40, Screen + 14 * 40, Screen + 15 * 40,
-	Screen + 16 * 40, Screen + 17 * 40, Screen + 18 * 40, Screen + 19 * 40,
-	Screen + 20 * 40, Screen + 21 * 40, Screen + 22 * 40, Screen + 23 * 40,
-	Screen + 24 * 40
-};
 
 __striped int HiresOffset[10] = {
 	16 + 0 * 32,
@@ -107,12 +74,15 @@ __striped int HiresOffset[10] = {
 
 static inline char plant_color_map(char c)
 {
-	if ((c & 0xf0) == (VCOL_PURPLE << 4))
-		return (c & 0x0f) | back_color;
-	else
-		return c;
+	return ((c & 0xf0) == (VCOL_PURPLE << 4)) ? (c & 0x0f) | back_color : c;
 }
 
+
+void plant_row_draw(char y)
+{
+	for(char x=0; x<9; x++)
+		plant_draw(x, y);	
+}
 
 void plant_grid_draw(void)
 {
@@ -336,85 +306,11 @@ void menu_draw_color_line(char x, char y)
 	char * cdp = Color + 4 * x + 40 * y;
 	char * hdp = Screen + 4 * x + 40 * y;
 
-	#pragma unroll(full)
 	for(char j=0; j<4; j++)
 	{
 		cdp[j] = PlantsColor0Data[16 * t + 4 * y + j];
 		hdp[j] = plant_color_map(PlantsColor1Data[16 * t + 4 * y + j]);
 	}
-}
-
-void menu_draw_price(char x, unsigned v)
-{
-	char	c[4], c0 = 10;
-
-	if (v >= 1000)
-	{
-		char	p = 0;
-		while (v >= 1000)
-		{
-			p ++;
-			v -= 1000;
-		}
-		c[0] = p;
-		c0 = 0;
-	}
-	else
-		c[0] = c0;
-
-	if (v >= 100)
-	{
-		char	p = 0;
-		while (v >= 100)
-		{
-			p ++;
-			v -= 100;
-		}
-		c[1] = p;
-		c0 = 0;
-	}
-	else
-		c[1] = c0;
-
-	if (v >= 10)
-	{
-		char	p = 0;
-		while (v >= 10)
-		{
-			p ++;
-			v -= 10;
-		}
-		c[2] = p;
-		c0 = 0;
-	}
-	else
-		c[2] = c0;
-
-	c[3] = v;
-
-	char * hdp = Hires + 4 * 320 + 32 * x;
-	for(char i=0; i<4; i++)
-	{
-		const char * sdp = DigitsHiresData + 8 * c[i];
-
-		for(char j=0; j<8; j++)
-			hdp[j] = sdp[j];
-		hdp += 8;
-	}
-
-}
-
-void menu_clear_price(char x)
-{
-	const char * sdp = DigitsHiresData + 80;
-
-	char * hdp = Hires + 4 * 320 + 32 * x;
-	for(char i=0; i<4; i++)
-	{
-		for(char j=0; j<8; j++)
-			hdp[j] = sdp[j];
-		hdp += 8;
-	}	
 }
 
 void menu_progress(char p, char m)
@@ -433,10 +329,12 @@ void menu_progress(char p, char m)
 	}
 }
 
-void menu_init(void)
+void menu_init(char slots)
 {
-	for(char i=0; i<10; i++)
+	for(char i=0; i<slots; i++)
 		menu_draw(i, PT_CARDSLOT);
+	for(char i=slots; i<10; i++)
+		menu_draw(i, PT_FREESLOT);
 	menu_size = 0;
 	menu_first = 0;
 }
@@ -452,7 +350,7 @@ void menu_add_item_at(char x, PlantType type, unsigned price, char warm, bool re
 	if (!ready)
 		menu_cooldown(x);	
 	menu[x].once = once;
-	menu_draw_price(x, price);
+	disp_put_price(price, 4 * x, 4);
 }
 
 void menu_add_item(PlantType type, unsigned price, char warm, bool ready, bool once)
@@ -463,7 +361,7 @@ void menu_add_item(PlantType type, unsigned price, char warm, bool ready, bool o
 	menu[menu_size].cool = 0;
 	menu[menu_size].once = once;
 	menu_draw(menu_size, type);
-	menu_draw_price(menu_size, price);
+	disp_put_price(price, 4 * menu_size, 4);
 	if (!ready)
 		menu_cooldown(menu_size);
 	if (type == PT_SUN)
@@ -490,11 +388,11 @@ void menu_remove_item(PlantType type)
 			if (menu[x].cool != 0)
 				menu_cooldown(x);	
 			menu[x].once = menu[x + 1].once;
-			menu_draw_price(x, menu[x].price);
+			disp_put_price(menu[x].price, 4 * x, 4);
 			x++;			
 		}
 		menu_draw(x, PT_CARDSLOT);
-		menu_clear_price(x);
+		disp_put_noprice(4 * x, 4);
 	}
 }
 
@@ -542,7 +440,7 @@ void sun_advance(void)
 			sun_active = false;
 			spr_show(7, false);
 			menu[0].price += sun_power;
-			menu_draw_price(0, menu[0].price);
+			disp_put_price(menu[0].price, 0, 4);
 		}
 		else
 		{
@@ -712,11 +610,11 @@ void plant_draw_field(char x, char y)
 	char * cp = ColorTab[y + 5] + x + 2;
 	PlantType p = x >= 36 ? PT_FLOORSPACE : plant_grid[y >> 2][x >> 2].type;
 
-	const char * sp = PlantsHiresData + 8 * 16 * p + 32 * (y & 3) + 8 * (x & 3);
+	const char * sp = PlantsHiresData + 8 * 16 * p + 8 * (((y & 3) << 2) | (x & 3));
 
 	for(char i=0; i<8; i++)
 		dp[i] = sp[i];
-	cp[0] = PlantsColor0Data[16 * p + 4 * (y & 3) + (x & 3)];
+	cp[0] = PlantsColor0Data[16 * p + (((y & 3) << 2) | (x & 3))];
 }
 
 void shots_init(void)
@@ -743,6 +641,7 @@ void shot_draw(char x, char y, char c)
 			dp[2] = 0x3c;
 			dp[3] = 0x3c;
 			dp[4] &= 0xc3;
+			cp[0] = c;
 			break;
 		case 1:
 			dp[0] &= 0xf0;
@@ -750,6 +649,7 @@ void shot_draw(char x, char y, char c)
 			dp[2] = (dp[2] & 0xc0) | 0x0f; dp[10] &= 0x3f; 
 			dp[3] = (dp[3] & 0xc0) | 0x0f; dp[11] &= 0x3f; 
 			dp[4] &= 0xf0;
+			cp[0] = c;
 			break;
 		case 2:
 			dp[0] &= 0xfc; dp[8] &= 0x3f;
@@ -757,6 +657,8 @@ void shot_draw(char x, char y, char c)
 			dp[2] = (dp[2] & 0xf0) | 0x03; dp[10] = (dp[10] & 0x0f) | 0xc0;
 			dp[3] = (dp[3] & 0xf0) | 0x03; dp[11] = (dp[11] & 0x0f) | 0xc0;
 			dp[4] &= 0xfc; dp[12] &= 0x3f;
+			cp[0] = c;
+			cp[1] = c;
 			break;
 		case 3:
 			dp[8] &= 0x0f;
@@ -764,12 +666,9 @@ void shot_draw(char x, char y, char c)
 			dp[2] &= 0xfc; dp[10] = (dp[10] & 0x03) | 0xf0;
 			dp[3] &= 0xfc; dp[11] = (dp[11] & 0x03) | 0xf0;
 			dp[12] &= 0x0f;
+			cp[1] = c;
 			break;
 	}
-
-	cp[0] = c;
-	if (x & 3)
-		cp[1] = c;
 }
 
 
@@ -784,8 +683,8 @@ void shots_add(char x, char y, char t, ShotType type)
 {
 	if (shots_free != 0xff)
 	{
-		if (x + t > 144)
-			t = 144 - x;
+		if (x + t > 148)
+			t = 148 - x;
 
 		char	s = shots_free;
 		shots_free = shots[s].next;
@@ -909,13 +808,15 @@ void plants_iterate(char y)
 			p->cool--;
 		else
 		{
+			unsigned r = rand();
+
 			switch (p->type)
 			{
 				case PT_PEASHOOTER_0:
 				case PT_PEASHOOTER_1:
 					if (s < right)
 					{
-						p->cool = 8;
+						p->cool = 7 + (r & 3);
 						shots_add(16 * s + 12, 4 * y + 1, 255, ST_PEA);
 					}
 					break;
@@ -924,7 +825,7 @@ void plants_iterate(char y)
 				case PT_REPEATER_1:
 					if (s < right)
 					{
-						p->cool = 8;
+						p->cool = 7 + (r & 3);
 						shots_add(16 * s + 16, 4 * y + 1, 255, ST_PEA);
 						shots_add(16 * s + 8, 4 * y + 1, 255, ST_PEA);
 					}
@@ -934,7 +835,7 @@ void plants_iterate(char y)
 				case PT_SNOWPEA_1:
 					if (s < right)
 					{
-						p->cool = 8;
+						p->cool = 7 + (r & 3);
 						shots_add(16 * s + 12, 4 * y + 1, 255, ST_FROST);
 					}
 					break;
@@ -943,7 +844,7 @@ void plants_iterate(char y)
 				case PT_PUFFSHROOM_1:
 					if (s < right && s + 3 >= left)
 					{
-						p->cool = 8;
+						p->cool = 7 + (r & 3);
 						shots_add(16 * s + 12, 4 * y + 2, 36, ST_PUFF);
 					}
 					break;
@@ -952,7 +853,7 @@ void plants_iterate(char y)
 				case PT_FUMESHROOM_1:
 					if (s < right && s + 4 >= left)
 					{
-						p->cool = 8;
+						p->cool = 7 + (r & 3);
 						shots_add(16 * s + 12, 4 * y + 1, 48, ST_FUME);
 						shots_add(16 * s + 22, 4 * y + 1, 32, ST_FUME);
 						shots_add(16 * s + 18, 4 * y + 0, 42, ST_FUME);
@@ -988,7 +889,7 @@ void plants_iterate(char y)
 					char x = s * 16;
 					while (z != 0xff)
 					{
-						if (zombies[z].x <= x + 32 && zombies[z].x + 16 > x && zombies[z].live > 0)
+						if (zombies[z].x <= x + 32 && zombies[z].x > x + 8 && zombies[z].live > 0)
 						{
 							zombies[z].live = -80;
 							p->type = PT_POTATOMINE_EXPLODED;
@@ -1005,9 +906,11 @@ void plants_iterate(char y)
 
 				case PT_SUNFLOWER_0:
 				case PT_SUNFLOWER_1:
+				case PT_SUNSHROOM_BIG_0:
+				case PT_SUNSHROOM_BIG_1:
 					if (!sun_active)
 					{
-						p->cool = 64 + (rand() & 63);
+						p->cool = 64 + (r & 63);
 						sun_add(s, 50 + 8 * 5 + 32 * y, 0, 25);					
 					}
 					break;
@@ -1016,7 +919,7 @@ void plants_iterate(char y)
 				case PT_SUNSHROOM_1:
 					if (!sun_active)
 					{
-						p->cool = 64 + (rand() & 63);
+						p->cool = 64 + (r & 63);
 						sun_add(s, 50 + 8 * 5 + 32 * y, 0, 15);					
 						p->age++;
 						if (p->age == 4)
@@ -1024,15 +927,6 @@ void plants_iterate(char y)
 							p->type = PT_SUNSHROOM_BIG_0;
 							plant_draw(s, y);
 						}
-					}
-					break;
-
-				case PT_SUNSHROOM_BIG_0:
-				case PT_SUNSHROOM_BIG_1:
-					if (!sun_active)
-					{
-						p->cool = 64 + (rand() & 63);
-						sun_add(s, 50 + 8 * 5 + 32 * y, 0, 25);					
 					}
 					break;
 
@@ -1075,7 +969,7 @@ void plants_iterate(char y)
 					}
 					else if (s < right)
 					{
-						p->cool = 8;
+						p->cool = 7 + (r & 3);
 						shots_add(16 * s + 12, 4 * y + 1, 255, ST_PUFF);
 					}
 					else

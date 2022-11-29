@@ -27,8 +27,9 @@ enum LevelCommand
 	LVC_ZOMBIE_PAPER = 0x04,
 	LVC_ZOMBIE_SCREENDOOR = 0x05,
 	LVC_ZOMBIE_FOOTBALL = 0x06,
+	LVC_ZOMBIE_DANCER = 0x07,
 
-	LVC_ZOMBIE_GRAVES = 0x07,
+	LVC_ZOMBIE_GRAVES = 0x08,
 
 	LVC_END = 0xf0,
 };
@@ -44,7 +45,8 @@ enum LevelFlags
 
 struct Level
 {
-	char					rows, flags, graves;
+	const char *			name;
+	char					rows, flags, graves, slots;
 	unsigned				sun;
 	unsigned				seeds;
 	const LevelCommand	*	cmds;

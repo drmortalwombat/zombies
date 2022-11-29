@@ -64,12 +64,15 @@ enum PlantType
 
 	PT_SCAREDYSHROOM_DUCK,
 
+	PT_ICESHROOM,
+
 	PT_CONVEYOR,
 	PT_FLOORSPACE,
 	PT_FLOORSPACE_MOWER,
 
 	PT_BORDER,
 	PT_CARDSLOT,
+	PT_FREESLOT,
 	PT_GO,
 
 	NUM_PLANT_TYPES
@@ -131,11 +134,7 @@ void sun_add(char x, char y, char vy, char power);
 
 void menu_draw(char x, char t);
 
-void menu_draw_price(char x, unsigned v);
-
-void menu_clear_price(char x);
-
-void menu_init(void);
+void menu_init(char slots);
 
 void menu_cooldown(char x);
 
@@ -160,6 +159,8 @@ void plant_draw_borders(void);
 void plant_clear_mower(char y);
 
 void plant_grid_clear(char rows);
+
+void plant_row_draw(char y);
 
 void plant_grid_draw(void);
 

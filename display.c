@@ -4,7 +4,7 @@
 
 #pragma section( sprites, 0)
 
-#pragma region( sprites, 0xc000, 0xd000, , , {sprites} )
+#pragma region( sprites, 0xbe00, 0xd000, , , {sprites} )
 
 #pragma data(sprites)
 
@@ -13,6 +13,44 @@ const char SpriteData[] = {
 };
 
 #pragma data(data)
+
+const char FontData[] = {
+	#embed ctm_chars "chars.ctm"
+};
+
+const char DigitsHiresData[] = {
+	#embed ctm_chars "digits.ctm"
+};
+
+__striped char * const HiresTab[25] = {
+	Hires +  0 * 320, Hires +  1 * 320, Hires +  2 * 320, Hires +  3 * 320,
+	Hires +  4 * 320, Hires +  5 * 320, Hires +  6 * 320, Hires +  7 * 320,
+	Hires +  8 * 320, Hires +  9 * 320, Hires + 10 * 320, Hires + 11 * 320,
+	Hires + 12 * 320, Hires + 13 * 320, Hires + 14 * 320, Hires + 15 * 320,
+	Hires + 16 * 320, Hires + 17 * 320, Hires + 18 * 320, Hires + 19 * 320,
+	Hires + 20 * 320, Hires + 21 * 320, Hires + 22 * 320, Hires + 23 * 320,
+	Hires + 24 * 320
+};
+
+__striped char * const ColorTab[25] = {
+	Color +  0 * 40, Color +  1 * 40, Color +  2 * 40, Color +  3 * 40,
+	Color +  4 * 40, Color +  5 * 40, Color +  6 * 40, Color +  7 * 40,
+	Color +  8 * 40, Color +  9 * 40, Color + 10 * 40, Color + 11 * 40,
+	Color + 12 * 40, Color + 13 * 40, Color + 14 * 40, Color + 15 * 40,
+	Color + 16 * 40, Color + 17 * 40, Color + 18 * 40, Color + 19 * 40,
+	Color + 20 * 40, Color + 21 * 40, Color + 22 * 40, Color + 23 * 40,
+	Color + 24 * 40
+};
+
+__striped char * const ScreenTab[25] = {
+	Screen +  0 * 40, Screen +  1 * 40, Screen +  2 * 40, Screen +  3 * 40,
+	Screen +  4 * 40, Screen +  5 * 40, Screen +  6 * 40, Screen +  7 * 40,
+	Screen +  8 * 40, Screen +  9 * 40, Screen + 10 * 40, Screen + 11 * 40,
+	Screen + 12 * 40, Screen + 13 * 40, Screen + 14 * 40, Screen + 15 * 40,
+	Screen + 16 * 40, Screen + 17 * 40, Screen + 18 * 40, Screen + 19 * 40,
+	Screen + 20 * 40, Screen + 21 * 40, Screen + 22 * 40, Screen + 23 * 40,
+	Screen + 24 * 40
+};
 
 __interrupt void music_irq(void)
 {
@@ -98,4 +136,149 @@ void display_init(void)
 
 	vic.spr_enable = 0x3f;
 	vic.spr_multi = 0x3f;
+}
+
+void disp_color_price(char dx, char dy)
+{
+	char * cdp = ScreenTab[dy] + dx;
+	for(char i=0; i<4; i++)
+		cdp[i] = VCOL_LT_GREY | (VCOL_DARK_GREY << 4);
+}
+
+void disp_put_price(unsigned v, char dx, char dy)
+{
+	char	c[4], c0 = 10;
+
+	if (v >= 1000)
+	{
+		char	p = 0;
+		while (v >= 1000)
+		{
+			p ++;
+			v -= 1000;
+		}
+		c[0] = p;
+		c0 = 0;
+	}
+	else
+		c[0] = c0;
+
+	if (v >= 100)
+	{
+		char	p = 0;
+		while (v >= 100)
+		{
+			p ++;
+			v -= 100;
+		}
+		c[1] = p;
+		c0 = 0;
+	}
+	else
+		c[1] = c0;
+
+	if (v >= 10)
+	{
+		char	p = 0;
+		while (v >= 10)
+		{
+			p ++;
+			v -= 10;
+		}
+		c[2] = p;
+		c0 = 0;
+	}
+	else
+		c[2] = c0;
+
+	c[3] = v;
+
+	char * hdp = HiresTab[dy] + 8 * dx;
+
+	for(char i=0; i<4; i++)
+	{
+		const char * sdp = DigitsHiresData + 8 * c[i];
+
+		for(char j=0; j<8; j++)
+			hdp[j] = sdp[j];
+		hdp += 8;
+	}
+
+}
+
+void disp_put_noprice(char dx, char dy)
+{
+	char * hdp = HiresTab[dy] + 8 * dx;
+
+	const char * sdp = DigitsHiresData + 80;
+
+	for(char i=0; i<4; i++)
+	{
+		for(char j=0; j<8; j++)
+			hdp[j] = sdp[j];
+		hdp += 8;
+	}
+
+}
+
+
+static const char cexpand[16] = {
+	0x00, 0x03, 0x0c, 0x0f, 0x30, 0x33, 0x3c, 0x3f,
+	0xc0, 0xc3, 0xcc, 0xcf, 0xf0, 0xf3, 0xfc, 0xff
+};
+
+void text_pline(char * hp, char m, char l)
+{
+	char t0 = hp[0];
+	char t1 = hp[8];
+	char t2 = hp[16];
+
+	char m0 = m | (m >> 1) | (m >> 2);
+	char m1 = (m << 3) | (m << 2) | (m << 1);
+
+	t0 &= ~cexpand[m0 >> 4];
+	t1 &= ~cexpand[m0 & 0x0f];
+	t2 &= ~cexpand[m1 & 0x0f];
+
+	l >>= 1;
+
+	t0 |= cexpand[l >> 4];
+	t1 |= cexpand[l & 0x0f];
+
+	hp[ 0] = t0;
+	hp[ 8] = t1;
+	hp[16] = t2;
+}
+
+void text_put(char x, char y, char color, const char * t)
+{
+	char	*	hp = HiresTab[y] + 8 * x;
+	char	*	cp = ColorTab[y] + x;
+	char		ci = 0;
+
+	while (char c = t[ci])
+	{
+		const char * fp = FontData + 8 * (c & 0x3f);
+		cp[0] = color;
+		cp[1] = color;
+
+		text_pline(hp, fp[0], 0);
+
+		char pl = 0;
+		for(char i=0; i<7; i++)
+		{
+			char l = fp[i];
+			char n = fp[i + 1];
+
+			text_pline(hp + i + 1, (pl | l | n) | ((pl | l) >> 1), l);
+			pl = l;
+		}
+
+		text_pline(hp + 320, fp[6] | (fp[6] >> 1), 0);
+		text_pline(hp + 321, fp[6] >> 1, 0);
+
+		ci++;
+		hp += 16;
+		cp += 2;
+	}
 }

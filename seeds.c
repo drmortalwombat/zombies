@@ -5,18 +5,18 @@
 #include "gamemusic.h"
 
 const const SeedInfo seed_info[16] = {
-	[SD_SUNFLOWER] =     {PT_SUNFLOWER_0,     50, 17, true},
-	[SD_SUNSHROOM] =     {PT_SUNSHROOM_0,     25, 17, true},
-	[SD_PUFFSHROOM] =    {PT_PUFFSHROOM_0,     0, 17, true},
 	[SD_PEASHOOTER] =    {PT_PEASHOOTER_0,   100, 17, true},
-
-	[SD_SNOWPEA] =       {PT_SNOWPEA_0,      175, 17},
+	[SD_SUNFLOWER] =     {PT_SUNFLOWER_0,     50, 17, true},
+	[SD_CHERRYBOMB] =    {PT_CHERRYBOMB,     150,  3},
 	[SD_WALLNUT] =       {PT_WALLNUT_0,       50,  6},
+
 	[SD_POTATOMINE] =    {PT_POTATOMINE_0,    25,  6},
+	[SD_SNOWPEA] =       {PT_SNOWPEA_0,      175, 17},
+	[SD_CHOMPER] =       {PT_CHOMPER_0,      150, 17},
 	[SD_REPEATER] =      {PT_REPEATER_0,     200, 17},
 
-	[SD_CHERRYBOMB] =    {PT_CHERRYBOMB,     150,  3},
-	[SD_CHOMPER] =       {PT_CHOMPER_0,      150, 17},
+	[SD_PUFFSHROOM] =    {PT_PUFFSHROOM_0,     0, 17, true},
+	[SD_SUNSHROOM] =     {PT_SUNSHROOM_0,     25, 17, true},
 	[SD_FUMESHROOM] =    {PT_FUMESHROOM_0,    75, 17, true},
 	[SD_SCAREDYSHROOM] = {PT_SCAREDYSHROOM_0, 25, 17, true},
 
@@ -30,14 +30,14 @@ void disp_put_char(PlantType type, char sx, char sy, char dx, char dy)
 	__assume(sx < 4);
 	__assume(sy < 4);
 
-	char * hdp = Hires + 8 * dx + 320 * dy;
+	char * hdp = HiresTab[dy] + 8 * dx;
 	const char * sdp = PlantsHiresData + 8 * 16 * type + 8 * sx + 32 * sy;
 
 	for(char j=0; j<8; j++)
 		hdp[j] = sdp[j];
 
-	char * cdp = Color + 40 * dy;
-	hdp = Screen + 40 * dy;
+	char * cdp = ColorTab[dy];
+	hdp = ScreenTab[dy];
 
 	const char * scdp = PlantsColor0Data + 16 * type + 4 * sy;
 	const char * shdp = PlantsColor1Data + 16 * type + 4 * sy;
@@ -51,7 +51,7 @@ void disp_put_tile(PlantType type, char dx, char dy)
 	__assume(dx < 36);
 	__assume(dy < 21);
 
-	char * hdp = Hires + 8 * dx + 320 * dy;
+	char * hdp = HiresTab[dy] + 8 * dx;
 	const char * sdp = PlantsHiresData + 8 * 16 * type;
 
 	for(char i=0; i<4; i++)
@@ -62,8 +62,8 @@ void disp_put_tile(PlantType type, char dx, char dy)
 		sdp += 32;
 	}
 
-	char * cdp = Color + 40 * dy + dx;
-	hdp = Screen + 40 * dy + dx;
+	char * cdp = ColorTab[dy] + dx;
+	hdp = ScreenTab[dy] + dx;
 
 	const char * scdp = PlantsColor0Data + 16 * type;
 	const char * shdp = PlantsColor1Data + 16 * type;
@@ -87,12 +87,11 @@ void disp_ghost_tile(PlantType type, char dx, char dy)
 	__assume(dx < 36);
 	__assume(dy < 21);
 
-	char * cdp = Color + 40 * dy + dx;
-	char * hdp = Screen + 40 * dy + dx;
+	char * cdp = ColorTab[dy] + dx;
+	char * hdp = ScreenTab[dy] + dx;
 
 	for(char i=0; i<4; i++)
 	{
-		#pragma unroll(full)
 		for(char j=0; j<4; j++)
 		{
 			cdp[j] = color_grey[PlantsColor0Data[16 * type + 4 * i + j] & 0x0f];
@@ -109,12 +108,11 @@ void disp_color_tile(PlantType type, char dx, char dy)
 	__assume(dx < 36);
 	__assume(dy < 21);
 
-	char * cdp = Color + 40 * dy + dx;
-	char * hdp = Screen + 40 * dy + dx;
+	char * cdp = ColorTab[dy] + dx;
+	char * hdp = ScreenTab[dy] + dx;
 
 	for(char i=0; i<4; i++)
 	{
-		#pragma unroll(full)
 		for(char j=0; j<4; j++)
 		{
 			cdp[j] = PlantsColor0Data[16 * type + 4 * i + j];
@@ -124,87 +122,6 @@ void disp_color_tile(PlantType type, char dx, char dy)
 		cdp += 40;
 		hdp += 40;
 	}	
-}
-
-void disp_put_price(unsigned v, char dx, char dy)
-{
-	char	c[4], c0 = 10;
-
-	if (v >= 1000)
-	{
-		char	p = 0;
-		while (v >= 1000)
-		{
-			p ++;
-			v -= 1000;
-		}
-		c[0] = p;
-		c0 = 0;
-	}
-	else
-		c[0] = c0;
-
-	if (v >= 100)
-	{
-		char	p = 0;
-		while (v >= 100)
-		{
-			p ++;
-			v -= 100;
-		}
-		c[1] = p;
-		c0 = 0;
-	}
-	else
-		c[1] = c0;
-
-	if (v >= 10)
-	{
-		char	p = 0;
-		while (v >= 10)
-		{
-			p ++;
-			v -= 10;
-		}
-		c[2] = p;
-		c0 = 0;
-	}
-	else
-		c[2] = c0;
-
-	c[3] = v;
-
-	char * hdp = Hires + 320 * dy + 8 * dx;
-	char * cdp = Screen + 40 * dy + dx;
-
-	for(char i=0; i<4; i++)
-	{
-		const char * sdp = DigitsHiresData + 8 * c[i];
-		cdp[i] = VCOL_LT_GREY;
-
-		for(char j=0; j<8; j++)
-			hdp[j] = sdp[j];
-		hdp += 8;
-	}
-
-}
-
-void disp_put_noprice(char dx, char dy)
-{
-	char * hdp = Hires + 320 * dy + 8 * dx;
-	char * cdp = Screen + 40 * dy + dx;
-
-	const char * sdp = DigitsHiresData + 80;
-
-	for(char i=0; i<4; i++)
-	{
-		cdp[i] = VCOL_LT_GREY;
-
-		for(char j=0; j<8; j++)
-			hdp[j] = sdp[j];
-		hdp += 8;
-	}
-
 }
 
 
@@ -228,7 +145,7 @@ void seeds_edit_open(void)
 	disp_put_char(PT_BORDER, 2, 2, 32, 22);
 }
 
-void seeds_edit_menu(SeedFlags seeds)
+void seeds_edit_menu(SeedFlags seeds, char slots)
 {
 	music_init(TUNE_SEEDS);
 	music_active = true;
@@ -243,8 +160,12 @@ void seeds_edit_menu(SeedFlags seeds)
 	{
 		if (seeds & (1u << i))
 		{
-			disp_put_tile(seed_info[i].plant, 8 + 4 * (n % 6), 7 + 5 * (n / 6));
-			disp_put_price(seed_info[i].cost, 8 + 4 * (n % 6), 11 + 5 * (n / 6));
+			char	x = 8 + 4 * (n % 6);
+			char	y = 7 + 5 * (n / 6);
+
+			disp_put_tile(seed_info[i].plant, x, y);
+			disp_put_price(seed_info[i].cost, x, y + 4);
+			disp_color_price(x, y + 4);
 			seedtab[n] = i;
 			n++;
 		}
@@ -254,28 +175,43 @@ void seeds_edit_menu(SeedFlags seeds)
 
 	while (n < 17)
 	{
-		disp_put_tile(PT_CARDSLOT, 8 + 4 * (n % 6), 7 + 5 * (n / 6));
-		disp_put_noprice(8 + 4 * (n % 6), 11 + 5 * (n / 6));
+		char	x = 8 + 4 * (n % 6);
+		char	y = 7 + 5 * (n / 6);
+
+		disp_put_tile(PT_CARDSLOT, x, y);
+		disp_put_noprice(x, y + 4);
+		disp_color_price(x, y + 4);
 		n++;		
 	}
 
-	disp_put_tile(PT_GO, 8 + 4 * (n % 6), 7 + 5 * (n / 6));
-	disp_put_noprice(8 + 4 * (n % 6), 11 + 5 * (n / 6));
-	n++;		
+	{
+		char	x = 8 + 4 * (n % 6);
+		char	y = 7 + 5 * (n / 6);
+
+		disp_put_tile(PT_GO, x, y);
+		disp_put_noprice(x, y + 4);
+		disp_color_price(x, y + 4);
+		n++;		
+	}
 
 	spr_set(6, true, 0, 0, 16 + 108, VCOL_WHITE, false, true, true);
+
+	char 	joymove = 0;
+	bool	joydown = false;
 
 	char	mx = 0, my = 0;
 	for(;;)
 	{
-		char		y = 50 + 8 * 7 + my * 40;
-		unsigned	x = 24 + 8 * 8 + mx * 32;
+		char		y = 49 + 8 * 7 + my * 40;
+		unsigned	x = 23 + 8 * 8 + mx * 32;
 
 		rirq_data(&cursorMux, 0, y);
 		rirq_data(&cursorMux, 1, x);
 		rirq_data(&cursorMux, 2, (x & 0x100) != 0 ? 0x40 : 0x00);
 		rirq_data(&cursorMux, 3, 16 + 108);
 		zombies_set_msbx(0x40, (x & 0x100) != 0 ? 0x40 : 0x00);
+
+		bool	select = false;
 
 		keyb_poll();
 		switch (keyb_key)
@@ -297,31 +233,74 @@ void seeds_edit_menu(SeedFlags seeds)
 					my--;
 				break;
 			case KSCAN_SPACE | KSCAN_QUAL_DOWN:
-				{
-					char si = my * 6 + mx;
-					if (si == 17 && menu_size == 7)
-						return;
-
-					if (si < numSeeds)
-					{
-						Seeds	s = seedtab[si];
-						if (seedused & (1 << si))
-						{
-							seedused &= ~(1 << si);
-							disp_color_tile(seed_info[s].plant, 8 + 4 * mx, 7 + 5 * my);
-							menu_remove_item(seed_info[s].plant);
-						}
-						else if (menu_size < 7)
-						{
-							seedused |= 1 << si;
-							disp_ghost_tile(seed_info[s].plant, 8 + 4 * mx, 7 + 5 * my);
-							menu_add_item(seed_info[s].plant, seed_info[s].cost, seed_info[s].warm, seed_info[s].ready, false);;
-						}
-					}
-				}
+				select = true;
 				break;
 		}
 
+		joy_poll(0);
+		if (joydown)
+		{
+			if (!joyb[0])
+				joydown = false;
+		}
+		else if (joyb[0])
+		{
+			select = true;
+			joydown = true;
+		}
+
+		if (joymove)
+		{
+			joymove--;
+			if (!joyx[0] && !joyy[0])
+				joymove = 0;
+		}
+		else if (joyx[0] < 0 && mx > 0)
+		{
+			mx--;
+			joymove = 20;
+		}
+		else if (joyx[0] > 0 && mx < 5)
+		{
+			mx++;
+			joymove = 20;
+		}
+		else if (joyy[0] < 0 && my > 0)
+		{
+			my--;
+			joymove = 20;
+		}
+		else if (joyy[0] > 0 && my < 2)
+		{
+			my++;
+			joymove = 20;
+		}
+
+		if (select)
+		{
+			char si = my * 6 + mx;
+			if (si == 17 && menu_size == slots + 1)
+				break;
+
+			if (si < numSeeds)
+			{
+				Seeds	s = seedtab[si];
+				if (seedused & (1 << si))
+				{
+					seedused &= ~(1 << si);
+					disp_color_tile(seed_info[s].plant, 8 + 4 * mx, 7 + 5 * my);
+					menu_remove_item(seed_info[s].plant);
+				}
+				else if (menu_size < slots + 1)
+				{
+					seedused |= 1 << si;
+					disp_ghost_tile(seed_info[s].plant, 8 + 4 * mx, 7 + 5 * my);
+					menu_add_item(seed_info[s].plant, seed_info[s].cost, seed_info[s].warm, seed_info[s].ready, false);;
+				}
+			}
+		}
 		vic_waitFrame();
 	}
+
+	spr_show(6, false);
 }

@@ -4,12 +4,12 @@
 
 #pragma section( music, 0)
 
-#pragma region( music, 0x9800, 0xc000, , , {music} )
+#pragma region( music, 0x9800, 0xbe00, , , {music} )
 
 #pragma data(music)
 
 __export char music[] = {
-	#embed 0x2800 0x88 "zombies.sid" 
+	#embed 0x2600 0x88 "zombies.sid" 
 };
 
 #pragma data(data)

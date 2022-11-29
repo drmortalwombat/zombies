@@ -71,6 +71,20 @@ void cursor_move(signed char dx, signed char dy)
 	}
 }
 
+void menu_move(signed char dx)
+{
+	if (dx < 0 && menuX > menu_first)
+		menuX--;
+	else if (dx > 0 && menuX + 1 < menu_size)
+		menuX++;
+	else
+		return;
+
+	unsigned	x = 24 + menuX * 32;
+	rirq_data(&menuMux, 1, x);
+	rirq_data(&menuMux, 2, (x & 0x100) != 0 ? 0x40 : 0x00);
+}
+
 void menu_set(char m)
 {
 	if (m >= menu_first && m < menu_size)
@@ -101,7 +115,7 @@ void cursor_select(void)
 				if (menu[menuX].cool == 0 && menu[menuX].price <= menu[0].price && plant_grid[cursorY][cursorX].type == PT_TOMBSTONE)
 				{
 					menu[0].price -= menu[menuX].price;
-					menu_draw_price(0, menu[0].price);
+					disp_put_price(menu[0].price, 0, 4);
 					plant_place(cursorX, cursorY, menu[menuX].type);
 					plant_draw(cursorX, cursorY);
 					menu_cooldown(menuX);
@@ -117,7 +131,7 @@ void cursor_select(void)
 					if (menu[menuX].cool == 0 && menu[menuX].price <= menu[0].price)
 					{
 						menu[0].price -= menu[menuX].price;
-						menu_draw_price(0, menu[0].price);
+						disp_put_price(menu[0].price, 0, 4);
 						plant_place(cursorX, cursorY, menu[menuX].type);
 						plant_draw(cursorX, cursorY);
 						menu_cooldown(menuX);
@@ -133,8 +147,10 @@ bool game_level_loop(void)
 	char	row = 0, warm = 0;
 	sun_count	= 500;
 
-	char	joydown = 0;
+	char	joymove = 0;
+	bool	joydown = false;
 	char	step = 1;
+	char	countdown = 5;
 	
 	for(;;)
 	{
@@ -156,7 +172,11 @@ bool game_level_loop(void)
 				row = 0;
 				level_iterate();
 				if (level_complete() && zombies_done())
-					return false;
+				{
+					countdown--;
+					if (countdown == 0)
+						return false;
+				}
 			}
 
 		}
@@ -232,31 +252,33 @@ bool game_level_loop(void)
 			case KSCAN_SPACE | KSCAN_QUAL_DOWN:
 				cursor_select();
 				break;
-
-			case KSCAN_M | KSCAN_QUAL_DOWN:
-				mower_start(cursorY);
-				break;
 		}
 
 		joy_poll(0);
 		if (joydown)
 		{
-			joydown--;
-			if (!joyx[0] && !joyy[0] && !joyb[0])
-				joydown = 0;
+			if (!joyb[0])
+			{
+				cursor_select();
+				joydown = false;
+			}
 		}
-		else
+		else if (joyb[0])
+			joydown = true;
+
+		if (joymove)
 		{
-			if (joyx[0] || joyy[0])
-			{
+			joymove--;
+			if (!joyx[0] && !joyy[0])
+				joymove = 0;
+		}
+		else if (joyx[0] || joyy[0])
+		{
+			if (joydown)
+				menu_move(joyx[0]);
+			else
 				cursor_move(joyx[0], joyy[0]);
-				joydown = 20;
-			}
-			if (joyb[0])
-			{
-				cursor_select();			
-				joydown = 20;
-			}
+			joymove = 20;
 		}
 
 		if (sirq == rirq_count)
@@ -278,7 +300,7 @@ int main(void)
 {
 	display_init();
 
-	char li = 11;
+	char li = 15;
 	for(;;)
 	{
 		sun_init();
@@ -287,6 +309,24 @@ int main(void)
 
 		level_start(GameLevels[li]);
 
+		text_put(12, 10, VCOL_ORANGE, level->name);
+
+		text_put(11, 14, VCOL_ORANGE, P"READY...");
+		for(int i=0; i<40; i++)
+			vic_waitFrame();
+		plant_row_draw(2);
+
+		text_put(12, 14, VCOL_ORANGE, P"SET...");
+		for(int i=0; i<40; i++)
+			vic_waitFrame();
+		plant_row_draw(2);
+
+		text_put(11, 14, VCOL_ORANGE, P"PLANT!");
+		for(int i=0; i<40; i++)
+			vic_waitFrame();
+		plant_row_draw(2);
+		plant_row_draw(1);
+
 		menu_set(1);
 		cursor_show(0, 0);
 		cursor_move(0, 0);
@@ -294,6 +334,9 @@ int main(void)
 		music_patch_voice3(false);
 		bool lost = game_level_loop();
 		music_patch_voice3(true);
+
+		spr_show(6, false);
+		spr_show(7, false);
 
 		if (lost)
 		{

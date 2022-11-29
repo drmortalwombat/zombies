@@ -16,9 +16,21 @@ static char * const Hires	=	(char *)0xe000;
 extern RIRQCode	*	zombieMux[5];
 extern RIRQCode		menuMux, cursorMux;
 
+extern __striped char * const HiresTab[25];
+extern __striped char * const ColorTab[25];
+extern __striped char * const ScreenTab[25];
+
 void display_init(void);
 
 void set_cursor_sprite(char x, char y);
+
+void text_put(char x, char y, char c, const char * t);
+
+void disp_put_price(unsigned v, char dx, char dy);
+
+void disp_put_noprice(char dx, char dy);
+
+void disp_color_price(char dx, char dy);
 
 #pragma compile("display.c")
 

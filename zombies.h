@@ -14,7 +14,11 @@ enum ZombieType
 	ZOMBIE_PAPER,
 	ZOMBIE_ANGRY,
 	ZOMBIE_SCREENDOOR,
-	ZOMBIE_FOOTBALL
+	ZOMBIE_FOOTBALL,
+	ZOMBIE_DANCER,
+	ZOMBIE_BACKUP,
+	ZOMBIE_BACKUP_RAISE,
+	ZOMBIE_RESURRECT
 };
 
 struct Zombie
@@ -27,6 +31,7 @@ struct Zombie
 	ZombieType	type;
 	char		delay;
 	char		speed;
+	char		extra;
 };
 
 extern __striped Zombie	zombies[32];

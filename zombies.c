@@ -13,6 +13,16 @@ SIDFX	SIDFXZombieFume[1] = {{
 	10
 }};
 
+SIDFX	SIDFXZombieChomp[1] = {{
+	2000, 4096,
+	SID_CTRL_GATE | SID_CTRL_NOISE,
+	SID_ATK_2 | SID_DKY_6,
+	0xf0  | SID_DKY_240,
+	-100, 0,
+	2, 12,
+	0
+}};
+
 char	zombies_msbx[5];
 char	zombies_basemsbx;
 
@@ -58,6 +68,8 @@ bool zombies_add(char x, char y, ZombieType type)
 		switch (type)
 		{
 			case ZOMBIE_BASE:
+			case ZOMBIE_BACKUP:
+			case ZOMBIE_BACKUP_RAISE:
 				zombies[s].live = 20;
 				break;
 			case ZOMBIE_CONE:
@@ -79,6 +91,13 @@ bool zombies_add(char x, char y, ZombieType type)
 			case ZOMBIE_FOOTBALL:
 				zombies[s].live = 127;
 				zombies[s].speed *= 2;
+				break;
+			case ZOMBIE_DANCER:
+				zombies[s].live = 50;
+				zombies[s].extra = 0;
+				break;
+			case ZOMBIE_RESURRECT:
+				zombies[s].live = 20;
 				break;
 		}
 		zombies[s].frozen = 0;
@@ -102,7 +121,7 @@ void zombies_grave(ZombieType type)
 		while (p != 0xff)
 		{
 			if (plant_grid[y][p].type == PT_TOMBSTONE)
-				zombies_add(p * 16 + 16, y, type);
+				zombies_add(p * 16 + 24, y, type);
 			p = plant_grid[y][p].next;
 		}
 	}
@@ -163,6 +182,106 @@ void zombies_fume(char x, char y, char w)
 		sidfx_play(2, SIDFXZombieFume, 1);
 }
 
+void zombie_find_backup(char y, char s, char * b)
+{
+	b[0] = 0xff;	
+	b[1] = 0xff;
+	b[2] = 0xff;
+	b[3] = 0xff;
+
+	char z = zombies_first[y];
+	while (z != 0xff)
+	{
+		if (zombies[z].type == ZOMBIE_BACKUP && zombies[z].extra == s)
+		{
+			if (zombies[z].x < zombies[s].x)
+				b[1] = z;
+			else
+				b[2] = z;
+		}
+		z = zombies[z].next;
+	}
+
+	if (y > 0)
+	{
+		z = zombies_first[y - 1];
+		while (z != 0xff)
+		{
+			if (zombies[z].type == ZOMBIE_BACKUP && zombies[z].extra == s)
+				b[0] = z;
+			z = zombies[z].next;
+		}		
+	}
+
+	if (y < 4)
+	{
+		z = zombies_first[y + 1];
+		while (z != 0xff)
+		{
+			if (zombies[z].type == ZOMBIE_BACKUP && zombies[z].extra == s)
+				b[3] = z;
+			z = zombies[z].next;
+		}				
+	}
+}
+
+void zombie_sync_backup(char y, char s)
+{
+	char	b[4];
+	zombie_find_backup(y, s, b);
+
+	char minx = zombies[s].x;
+	if (b[0] != 0xff && zombies[b[0]].x > minx + 1)
+		minx = zombies[b[0]].x;
+	if (b[1] != 0xff && zombies[b[1]].x + 16 > minx + 1)
+		minx = zombies[b[1]].x + 16;
+	if (b[2] != 0xff && zombies[b[2]].x - 16 > minx + 1)
+		minx = zombies[b[2]].x - 16;
+	if (b[3] != 0xff && zombies[b[3]].x > minx + 1)
+		minx = zombies[b[3]].x;
+	zombies[s].x = minx;
+}
+
+void zombie_free_backup(char y, char s)
+{
+	char	b[4];
+	zombie_find_backup(y, s, b);
+	if (b[0] != 0xff)
+		zombies[b[0]].type = ZOMBIE_BASE;
+	if (b[1] != 0xff)
+		zombies[b[1]].type = ZOMBIE_BASE;
+	if (b[2] != 0xff)
+		zombies[b[2]].type = ZOMBIE_BASE;
+	if (b[3] != 0xff)
+		zombies[b[3]].type = ZOMBIE_BASE;
+}
+
+void zombie_add_backup(char y, char s)
+{
+	char	b[4];
+	zombie_find_backup(y, s, b);
+	if (y > 0 && b[0] == 0xff)
+	{
+		zombies_add(zombies[s].x, y - 1, ZOMBIE_BACKUP_RAISE);
+		zombies[zombies_first[s]].extra = s;
+	}
+	if (b[1] == 0xff)
+	{
+		zombies_add(zombies[s].x - 16, y, ZOMBIE_BACKUP_RAISE);
+		zombies[zombies_first[s]].extra = s;
+	}
+	if (b[2] == 0xff)
+	{
+		zombies_add(zombies[s].x + 16, y, ZOMBIE_BACKUP_RAISE);
+		zombies[zombies_first[s]].extra = s;
+	}
+	if (y < 4 && b[3] == 0xff)
+	{
+		zombies_add(zombies[s].x, y + 1, ZOMBIE_BACKUP_RAISE);
+		zombies[zombies_first[s]].extra = s;
+	}
+}
+
 bool zombies_advance(char y)
 {
 	char msbx = 0;
@@ -188,6 +307,7 @@ bool zombies_advance(char y)
 				case ZOMBIE_VAULT:
 				case ZOMBIE_BASE:
 				case ZOMBIE_ANGRY:
+				case ZOMBIE_BACKUP:
 					zombies[s].type = ZOMBIE_CORPSE;
 					zombies[s].phase = 0;
 					break;
@@ -207,6 +327,11 @@ bool zombies_advance(char y)
 					zombies[s].phase++;
 					if (zombies[s].phase == 4)
 						zombies[s].type = ZOMBIE_NONE;
+					break;
+				case ZOMBIE_DANCER:
+					zombie_free_backup(y, s);
+					zombies[s].type = ZOMBIE_CORPSE;
+					zombies[s].phase = 0;
 					break;
 			}
 		}
@@ -239,7 +364,7 @@ bool zombies_advance(char y)
 					}
 				}
 			}
-			else if (px < 9 && plant_grid[y][px].type > PT_GROUND)
+			else if (zombies[s].type != ZOMBIE_BACKUP_RAISE && zombies[s].type != ZOMBIE_RESURRECT && px < 9 && plant_grid[y][px].type > PT_GROUND)
 			{
 				if (zombies[s].type == ZOMBIE_POLE)
 				{
@@ -262,6 +387,8 @@ bool zombies_advance(char y)
 								plant_remove(px, y);
 							plant_draw(px, y);
 						}
+
+						sidfx_play(2, SIDFXZombieChomp, 1);
 					}
 				}
 			}
@@ -272,10 +399,54 @@ bool zombies_advance(char y)
 				
 				if (d & 0x0100)
 				{
-					zombies[s].x --;
+					if (zombies[s].type == ZOMBIE_DANCER)
+						zombie_sync_backup(y, s);
+
+					if (zombies[s].type == ZOMBIE_DANCER && zombies[s].extra == 5)
+					{
+						if (zombies[s].phase == 0)
+							zombie_add_backup(y, s);
+					}
+					else if (zombies[s].type == ZOMBIE_RESURRECT || zombies[s].type == ZOMBIE_BACKUP_RAISE)
+					{
+
+					}
+					else if (zombies[s].type == ZOMBIE_BACKUP && zombies[s].extra != 0xff)
+					{
+						char dx = zombies[zombies[s].extra].x;
+						char x = zombies[s].x;
+						if (x + 4 < dx)
+							x = dx - 16;
+						else if (x > dx + 4)
+							x = dx + 16;
+						else
+							x = dx;
+						zombies[s].x = x;
+					}
+					else
+						zombies[s].x --;
+
 					zombies[s].phase++;
 					if (zombies[s].phase >= 6)
+					{
 						zombies[s].phase = 0;
+						if (zombies[s].type == ZOMBIE_DANCER)
+						{
+							zombies[s].extra++;
+							if (zombies[s].extra == 6)
+							{
+								zombies[s].extra = 0;
+							}
+						}
+						else if (zombies[s].type == ZOMBIE_RESURRECT)
+						{
+							zombies[s].type = ZOMBIE_BASE;
+						}
+						else if (zombies[s].type == ZOMBIE_BACKUP_RAISE)
+						{
+							zombies[s].type = ZOMBIE_BACKUP;
+						}
+					}
 				}
 			}
 
@@ -322,6 +493,7 @@ bool zombies_advance(char y)
 				 		img += 100 + 16;
 				 		break;
 				 	case ZOMBIE_BASE:
+				 	case ZOMBIE_BACKUP:
 				 		img += 0 + 16;
 				 		break;
 				 	case ZOMBIE_CONE:
@@ -347,6 +519,13 @@ bool zombies_advance(char y)
 				 		break;
 				 	case ZOMBIE_FOOTBALL:
 				 		img += 70 + 16;
+				 		break;
+				 	case ZOMBIE_DANCER:
+				 		img += 80 + 16;
+				 		break;
+				 	case ZOMBIE_BACKUP_RAISE:
+				 	case ZOMBIE_RESURRECT:
+				 		img += 90 + 16;
 				 		break;
 				}
 
