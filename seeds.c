@@ -20,7 +20,9 @@ const const SeedInfo seed_info[16] = {
 	[SD_FUMESHROOM] =    {PT_FUMESHROOM_0,    75, 17, true},
 	[SD_SCAREDYSHROOM] = {PT_SCAREDYSHROOM_0, 25, 17, true},
 
-	[SD_GRAVEDIGGER] =   {PT_GRAVEDIGGER,     75, 17, true}
+	[SD_GRAVEDIGGER] =   {PT_GRAVEDIGGER,     75, 17, true},
+	[SD_ICESHROOM] =	 {PT_ICESHROOM,       75, 3},
+	[SD_DOOMSHROOM] =	 {PT_DOOMSHROOM,	 125, 3}
 };
 
 void disp_put_char(PlantType type, char sx, char sy, char dx, char dy)

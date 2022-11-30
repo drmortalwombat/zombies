@@ -146,6 +146,8 @@ void plant_place(char x, char y, PlantType p)
 			pp->live = 5;
 			break;
 		case PT_CHERRYBOMB:
+		case PT_ICESHROOM:
+		case PT_DOOMSHROOM:
 			pp->cool = 3;
 			pp->live = 20;
 			break;
@@ -871,6 +873,7 @@ void plants_iterate(char y)
 				case PT_GRAVEDIGGER_0:
 				case PT_EXPLOSION_3:
 				case PT_POTATOMINE_EXPLODED:
+				case PT_SNOWFLAKE:
 					p->type = back_tile;
 					plant_draw(s, y);
 
@@ -880,6 +883,11 @@ void plants_iterate(char y)
 						plant_first[y] = n;
 					s = ps;
 					break;
+
+				case PT_DOOMCLOUD:
+					p->type = PT_CRATER;
+					plant_draw(s, y);
+					break;				
 
 				case PT_POTATOMINE_0:
 				case PT_POTATOMINE_1:
@@ -934,6 +942,29 @@ void plants_iterate(char y)
 				case PT_CHOMPER_EAT_1:
 					p->type = PT_CHOMPER_0;
 					plant_draw(s, y);
+					break;
+
+				case PT_ICESHROOM:
+					p->type = PT_SNOWFLAKE;
+					p->cool = 2;
+					plant_draw(s, y);
+					zombies_freeze_all(10);
+					break;
+
+				case PT_DOOMSHROOM:
+					p->type = PT_DOOMCLOUD;
+					p->cool = 2;
+					plant_draw(s, y);
+					{
+						char sy = 0, ey = 5;
+						if (y > 2)
+							sy = y -2;
+						else if (y < 2)
+							ey = y + 3;
+						for(char i=sy; i<ey; i++)
+							zombies_splash(s * 16 + 28, i, 48, 127);
+					}
+					sidfx_play(2, SIDFXExplosion, 1);					
 					break;
 
 				case PT_CHERRYBOMB:

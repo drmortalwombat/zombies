@@ -161,6 +161,19 @@ void zombies_splash(char x, char y, char w, char damage)
 	}
 }
 
+void zombies_freeze_all(char frost)
+{
+	for(char y=0; y<5; y++)
+	{
+		char s = zombies_first[y];
+		while (s != 0xff)
+		{
+			zombies[s].frozen += frost;
+			s = zombies[s].next;
+		}		
+	}
+}
+
 void zombies_fume(char x, char y, char w)
 {
 	bool	fume = false;

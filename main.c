@@ -300,7 +300,7 @@ int main(void)
 {
 	display_init();
 
-	char li = 15;
+	char li = 17;
 	for(;;)
 	{
 		sun_init();

@@ -56,6 +56,8 @@ void zombies_splash(char x, char y, char w, char damage);
 
 void zombies_fume(char x, char y, char w);
 
+void zombies_freeze_all(char frost);
+
 bool zombies_done(void);
 
 #pragma compile("zombies.c")
