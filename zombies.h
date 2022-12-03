@@ -44,7 +44,7 @@ void zombies_init(void);
 
 void zombies_clear(void);
 
-bool zombies_add(char x, char y, ZombieType type);
+bool zombies_add(char x, char y, ZombieType type, char extra);
 
 void zombies_grave(ZombieType type);
 

@@ -4,12 +4,12 @@
 
 #pragma section( music, 0)
 
-#pragma region( music, 0x9800, 0xbe00, , , {music} )
+#pragma region( music, 0x9400, 0xbe00, , , {music} )
 
 #pragma data(music)
 
 __export char music[] = {
-	#embed 0x2600 0x88 "zombies.sid" 
+	#embed 0x2900 0x88 "zombies.sid" 
 };
 
 #pragma data(data)
@@ -21,7 +21,7 @@ void music_init(Tune tune)
 	__asm
 	{
 		lda		tune
-		jsr		$9800
+		jsr		$9400
 	}
 }
 
@@ -46,14 +46,14 @@ void music_play(void)
 	{
 		__asm
 		{
-			jsr		$9803
+			jsr		$9403
 		}
 	}
 }
 
 void music_patch_voice3(bool enable)
 {
-	*(char *)0x9968 = enable ? 0x20 : 0x4c;
+	*(char *)0x9568 = enable ? 0x20 : 0x4c;
 }
 
 void music_toggle(void)

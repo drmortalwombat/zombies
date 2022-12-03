@@ -15,7 +15,7 @@
 #include "lawnmower.h"
 #include "seeds.h"
 
-#pragma region( main, 0x0900, 0x9800, , , {code, data, bss, heap, stack} )
+#pragma region( main, 0x0880, 0x9400, , , {code, data, bss, heap, stack} )
 #pragma stacksize(1024)
 
 signed char cursorX, cursorY, menuX;
@@ -208,16 +208,26 @@ bool game_level_loop(void)
 		switch (keyb_key)
 		{
 			case KSCAN_CSR_RIGHT | KSCAN_QUAL_DOWN:
+			case KSCAN_D | KSCAN_QUAL_DOWN:
 				cursor_move(1, 0);
 				break;
 			case KSCAN_CSR_RIGHT | KSCAN_QUAL_SHIFT | KSCAN_QUAL_DOWN:
+			case KSCAN_A | KSCAN_QUAL_DOWN:
 				cursor_move(-1, 0);
 				break;
 			case KSCAN_CSR_DOWN | KSCAN_QUAL_DOWN:
+			case KSCAN_S | KSCAN_QUAL_DOWN:
 				cursor_move(0, 1);
 				break;
 			case KSCAN_CSR_DOWN | KSCAN_QUAL_SHIFT | KSCAN_QUAL_DOWN:
+			case KSCAN_W | KSCAN_QUAL_DOWN:
 				cursor_move(0, -1);
+				break;
+			case KSCAN_Q | KSCAN_QUAL_DOWN:
+				menu_move(-1);
+				break;
+			case KSCAN_E | KSCAN_QUAL_DOWN:
+				menu_move(1);
 				break;
 			case KSCAN_0 | KSCAN_QUAL_DOWN:
 				menu_set(0);
@@ -300,7 +310,7 @@ int main(void)
 {
 	display_init();
 
-	char li = 17;
+	char li = 0;
 	for(;;)
 	{
 		sun_init();

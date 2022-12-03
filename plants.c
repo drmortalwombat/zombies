@@ -683,7 +683,7 @@ void shot_clear(char x, char y)
 
 void shots_add(char x, char y, char t, ShotType type)
 {
-	if (shots_free != 0xff)
+	if (shots_free != 0xff && x < 148)
 	{
 		if (x + t > 148)
 			t = 148 - x;

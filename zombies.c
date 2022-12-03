@@ -54,7 +54,7 @@ void zombies_init(void)
 	zombies_free = 0;
 }
 
-bool zombies_add(char x, char y, ZombieType type)
+bool zombies_add(char x, char y, ZombieType type, char extra)
 {
 	if (zombies_free != 0xff && zombies_count[y] < 6)
 	{
@@ -64,6 +64,7 @@ bool zombies_add(char x, char y, ZombieType type)
 		zombies[s].phase = 0;
 		zombies[s].delay = 0;		
 		zombies[s].speed = 112 + (rand() & 15);
+		zombies[s].extra = extra;
 
 		switch (type)
 		{
@@ -94,7 +95,6 @@ bool zombies_add(char x, char y, ZombieType type)
 				break;
 			case ZOMBIE_DANCER:
 				zombies[s].live = 50;
-				zombies[s].extra = 0;
 				break;
 			case ZOMBIE_RESURRECT:
 				zombies[s].live = 20;
@@ -121,7 +121,7 @@ void zombies_grave(ZombieType type)
 		while (p != 0xff)
 		{
 			if (plant_grid[y][p].type == PT_TOMBSTONE)
-				zombies_add(p * 16 + 24, y, type);
+				zombies_add(p * 16 + 24, y, type, 0);
 			p = plant_grid[y][p].next;
 		}
 	}
@@ -274,25 +274,13 @@ void zombie_add_backup(char y, char s)
 	char	b[4];
 	zombie_find_backup(y, s, b);
 	if (y > 0 && b[0] == 0xff)
-	{
-		zombies_add(zombies[s].x, y - 1, ZOMBIE_BACKUP_RAISE);
-		zombies[zombies_first[s]].extra = s;
-	}
+		zombies_add(zombies[s].x, y - 1, ZOMBIE_BACKUP_RAISE, s);
 	if (b[1] == 0xff)
-	{
-		zombies_add(zombies[s].x - 16, y, ZOMBIE_BACKUP_RAISE);
-		zombies[zombies_first[s]].extra = s;
-	}
+		zombies_add(zombies[s].x - 16, y, ZOMBIE_BACKUP_RAISE, s);
 	if (b[2] == 0xff)
-	{
-		zombies_add(zombies[s].x + 16, y, ZOMBIE_BACKUP_RAISE);
-		zombies[zombies_first[s]].extra = s;
-	}
+		zombies_add(zombies[s].x + 16, y, ZOMBIE_BACKUP_RAISE, s);
 	if (y < 4 && b[3] == 0xff)
-	{
-		zombies_add(zombies[s].x, y + 1, ZOMBIE_BACKUP_RAISE);
-		zombies[zombies_first[s]].extra = s;
-	}
+		zombies_add(zombies[s].x, y + 1, ZOMBIE_BACKUP_RAISE, s);
 }
 
 bool zombies_advance(char y)

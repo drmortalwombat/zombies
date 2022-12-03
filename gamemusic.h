@@ -17,7 +17,8 @@ enum Tune
 	TUNE_GAME_5, // NIGHT
 	TUNE_VICTORY,
 	TUNE_GAME_6, // NIGHT
-	TUNE_LOST
+	TUNE_LOST,
+	TUNE_CONVEYOR
 };
 
 extern bool music_active;

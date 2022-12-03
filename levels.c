@@ -593,7 +593,7 @@ static const Level	LevelDay10 = {
 	50,
 	SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER,
 	LevelDayCmds10,
-	TUNE_GAME_2
+	TUNE_CONVEYOR
 };
 
 static const LevelCommand	LevelNightCmds1[] = {
@@ -1063,6 +1063,7 @@ static const LevelCommand	LevelNightCmds9[] = {
 
 
 static const LevelCommand	LevelNightCmds10[] = {
+
 	LVC_DELAY_5S | LVC_ZOMBIE,
 	LVC_DELAY_10F | LVC_ZOMBIE_CONE,
 
@@ -1295,7 +1296,7 @@ static const Level	LevelNight10 = {
 	50,
 	SF_PUFFSHROOM | SF_FUMESHROOM | SF_GRAVEDIGGER | SF_SCAREDYSHROOM | SF_ICESHROOM | SF_DOOMSHROOM,
 	LevelNightCmds10,
-	TUNE_GAME_6
+	TUNE_CONVEYOR
 };
 
 const Level	*	GameLevels[] = {
@@ -1502,35 +1503,35 @@ void level_iterate(void)
 			switch (level->cmds[level_cmd] & 0x0f)
 			{
 				case LVC_ZOMBIE:
-					done = zombies_add(172, row, ZOMBIE_BASE);
+					done = zombies_add(172, row, ZOMBIE_BASE, 0);
 					break;
 
 				case LVC_ZOMBIE_CONE:
-					done = zombies_add(172, row, ZOMBIE_CONE);
+					done = zombies_add(172, row, ZOMBIE_CONE, 0);
 					break;			
 
 				case LVC_ZOMBIE_POLE:
-					done = zombies_add(172, row, ZOMBIE_POLE);
+					done = zombies_add(172, row, ZOMBIE_POLE, 0);
 					break;			
 
 				case LVC_ZOMBIE_BUCKET:
-					done = zombies_add(172, row, ZOMBIE_BUCKET);
+					done = zombies_add(172, row, ZOMBIE_BUCKET, 0);
 					break;			
 
 				case LVC_ZOMBIE_PAPER:
-					done = zombies_add(172, row, ZOMBIE_PAPER);
+					done = zombies_add(172, row, ZOMBIE_PAPER, 0);
 					break;			
 
 				case LVC_ZOMBIE_SCREENDOOR:
-					done = zombies_add(172, row, ZOMBIE_SCREENDOOR);
+					done = zombies_add(172, row, ZOMBIE_SCREENDOOR, 0);
 					break;			
 
 				case LVC_ZOMBIE_FOOTBALL:
-					done = zombies_add(172, row, ZOMBIE_FOOTBALL);
+					done = zombies_add(172, row, ZOMBIE_FOOTBALL, 0);
 					break;						
 
 				case LVC_ZOMBIE_DANCER:
-					done = zombies_add(172, row, ZOMBIE_DANCER);
+					done = zombies_add(172, row, ZOMBIE_DANCER, 0);
 					break;						
 
 				case LVC_ZOMBIE_GRAVES:
