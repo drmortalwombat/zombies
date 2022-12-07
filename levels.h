@@ -31,7 +31,7 @@ enum LevelCommand
 
 	LVC_ZOMBIE_GRAVES = 0x08,
 
-	LVC_END = 0xf0,
+	LVC_END = 0x0f,
 };
 
 enum LevelFlags
@@ -40,7 +40,8 @@ enum LevelFlags
 	LF_NIGHT		=	0x0001,
 	LF_CONVEYOR		=	0x0002,
 	LF_SHOVEL		=	0x0004,
-	LF_FIXSEED		=	0x0008
+	LF_FIXSEED		=	0x0008,
+	LF_GENERATED	=	0x0010
 };
 
 struct Level
@@ -56,7 +57,7 @@ struct Level
 extern const Level	*	GameLevels[];
 extern const Level	*	level;
 
-void level_start(const Level * l);
+void level_start(char li);
 
 void level_iterate(void);
 

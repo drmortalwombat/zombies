@@ -319,7 +319,10 @@ void menu_progress(char p, char m)
 {
 	char * hdp = Screen + 4 * 40;
 
-	p = (m - p) * 40 / m;
+	if (p < m)
+		p = (m - p) * 40 / m;
+	else
+		p = 0;
 
 	for(char j=0; j<p; j++)
 	{

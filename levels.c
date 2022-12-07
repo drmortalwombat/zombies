@@ -4,10 +4,36 @@
 #include <c64/vic.h>
 
 const Level	*	level;
-char			level_cmd, level_size, level_conveyor;
-unsigned		level_delay;
+char			level_cmd, level_size, level_conveyor, level_index, level_phase;
+unsigned		level_delay, level_brains;
+LevelCommand	level_command;
+
 
 char			level_rows[32];
+
+struct ZombieInfo
+{
+	char			cost, num;
+	char			phase, level;
+	const char *	name;
+};
+
+static const char	delayinfo[11] = {
+	1, 2, 3, 5, 10, 25, 50, 75, 100, 125, 150
+};
+
+static const ZombieInfo	zombieInfos[LVC_ZOMBIE_GRAVES] = {
+	[LVC_ZOMBIE] 			= {1,  25, 0, 0, "zombie"},
+	[LVC_ZOMBIE_CONE] 		= {3,  13, 3, 0, "cone"},
+	[LVC_ZOMBIE_POLE]		= {4,   8, 4, 1, "pole"},
+	[LVC_ZOMBIE_BUCKET]		= {6,   8, 5, 2, "bucket"},
+	[LVC_ZOMBIE_PAPER]		= {5,   4, 5, 3, "paper"},
+	[LVC_ZOMBIE_SCREENDOOR]	= {7,   3, 5, 4, "screendoor"},
+	[LVC_ZOMBIE_FOOTBALL]	= {10,  2, 6, 5, "football"},
+	[LVC_ZOMBIE_DANCER]		= {15,  1, 6, 6, "dancer"}
+};
+
+static LevelCommand	zshuffle[64];
 
 
 static const LevelCommand	LevelDayCmds1[] = {
@@ -1322,16 +1348,99 @@ const Level	*	GameLevels[] = {
 	&LevelNight10,
 };
 
-void level_start(const Level * l)
+char NighmareText[13] = P"NIGHTMARE 00";
+
+Level	LevelNightmare = {
+	NighmareText,
+	0b11111,
+	LF_NIGHT | LF_SHOVEL | LF_GENERATED,
+	13, 8,
+	50,
+	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_PUFFSHROOM | SF_SUNSHROOM| SF_FUMESHROOM | SF_GRAVEDIGGER | SF_SCAREDYSHROOM | SF_ICESHROOM | SF_DOOMSHROOM,
+	nullptr,
+	TUNE_GAME_5	
+};
+
+static unsigned level_seed;
+
+unsigned int level_rand(void)
 {
-	level = l;
+    level_seed ^= level_seed << 7;
+    level_seed ^= level_seed >> 9;
+    level_seed ^= level_seed << 8;
+	return level_seed;
+}
+
+static LevelCommand randzombie(void)
+{
+	char	k = level_rand() & 31;
+	LevelCommand	z = zshuffle[k];
+	while (k < 63)
+	{
+		zshuffle[k] = zshuffle[k + 1];
+		k++;
+	}
+	zshuffle[63] = z;
+	return z;
+}
+
+static const Tune	level_tunes[8] = {
+	TUNE_GAME_1,
+	TUNE_GAME_2,
+	TUNE_GAME_3,
+	TUNE_GAME_4,
+
+	TUNE_GAME_5,
+	TUNE_GAME_6,
+	TUNE_GAME_2,
+	TUNE_GAME_5,
+};
+
+
+
+void level_start(char li)
+{
 	level_cmd = 0;
 	level_delay = 0;
 	level_conveyor = 0;
-
+	level_command = 0;
 	level_size = 0;
-	while (level->cmds[level_size] != LVC_END)
-		level_size++;
+	level_phase = 0;
+	level_brains = 0;
+
+	if (li >= 18)
+	{
+		level_index = li - 18;
+
+		level = &LevelNightmare;
+		NighmareText[10] = (level_index + 1) / 10 + '0';
+		NighmareText[11] = (level_index + 1) % 10 + '0';
+
+		level_size = level_index + 6;
+
+		level_seed = level_index * 57 + level_index * 371 + level_index * 1131+ 0x3271;
+
+		LevelNightmare.graves = 7 + level_index;
+		LevelNightmare.tune = level_tunes[level_index & 7];
+
+		char	t = 0;
+		for(char i=0; i<8; i++)
+		{
+			for(char j=0; j<zombieInfos[i].num; j++)
+				zshuffle[t++] = i;
+		}		
+
+		for(char i=0; i<64; i++)
+			randzombie();
+	}
+	else
+	{
+		level = GameLevels[li];
+
+		while (level->cmds[level_size] != LVC_END)
+			level_size++;
+	}
+
 
 	char row = 0;
 	for(char i=0; i<32; i++)
@@ -1342,12 +1451,12 @@ void level_start(const Level * l)
 			if (row == 5)
 				row = 0;
 		}
-		while (!(l->rows & (1 << row)));
+		while (!(level->rows & (1 << row)));
 
 		level_rows[i] = row;
 	}
 
-	if (l->flags & LF_NIGHT)
+	if (level->flags & LF_NIGHT)
 	{
 		back_color = VCOL_PURPLE << 4;
 		back_tile = PT_NONE_NIGHT;
@@ -1360,16 +1469,16 @@ void level_start(const Level * l)
 
 	plant_draw_borders();
 
-	if (l->flags & LF_CONVEYOR)
+	if (level->flags & LF_CONVEYOR)
 		menu_init(10);
 	else
-		menu_init(l->slots + 1);
+		menu_init(level->slots + 1);
 
 	mower_init();
 
-	plant_grid_clear(l->rows);
+	plant_grid_clear(level->rows);
 
-	for(char i=0; i<l->graves; i++)
+	for(char i=0; i<level->graves; i++)
 	{
 		char x, y;
 		do {
@@ -1384,19 +1493,19 @@ void level_start(const Level * l)
 
 	menu_progress(0, level_size);
 
-	unsigned	seeds = l->seeds;
-	if (l->flags & LF_CONVEYOR)
+	unsigned	seeds = level->seeds;
+	if (level->flags & LF_CONVEYOR)
 	{
 		for(char i=0; i<9; i++)
 			menu_add_item(PT_CONVEYOR, 0, 0, false, false);
 
-		if (l->flags & LF_SHOVEL)
+		if (level->flags & LF_SHOVEL)
 			menu_add_item(PT_SHOVEL, 0, 0, true, false);
 	}
 	else
 	{
-		menu_add_item(PT_SUN, l->sun, 0, true, false);
-		if (l->flags & LF_FIXSEED)
+		menu_add_item(PT_SUN, level->sun, 0, true, false);
+		if (level->flags & LF_FIXSEED)
 		{
 			for(char i=0; i<15; i++)
 			{
@@ -1406,18 +1515,67 @@ void level_start(const Level * l)
 		}
 		else
 		{
-			seeds_edit_menu(seeds, l->slots);
+			seeds_edit_menu(seeds, level->slots);
 			plant_grid_draw();
 		}
 
-		if (l->flags & LF_SHOVEL)
+		if (level->flags & LF_SHOVEL)
 			menu_add_item(PT_SHOVEL, 0, 0, true, false);
 	}
 
 
-	music_init(l->tune);
+	music_init(level->tune);
 
 	music_active = true;
+}
+
+static const LevelCommand zombie_delays[8] = {
+	LVC_DELAY_10F, LVC_DELAY_10F,
+	LVC_DELAY_20F, LVC_DELAY_20F,
+	LVC_DELAY_30F, LVC_DELAY_30F,
+	LVC_DELAY_1S,
+	LVC_DELAY_2S
+};
+
+LevelCommand level_next_command(void)
+{
+	if (level->flags & LF_GENERATED)
+	{
+		if (level_cmd == level_size)
+			return LVC_END;
+
+		char	di;
+		if (level_brains == 0)
+		{
+			do 	{
+				di = (level_rand() & 3) + 6;
+				level_brains = ((long)((1 + level_cmd) * (4 + level_index)) * delayinfo[di]) >> 8;
+			} while (level_brains < 1);
+
+			di <<= 4;
+
+			if (level_cmd + 1 == level_size)
+				return LVC_ZOMBIE_GRAVES | di;
+		}
+		else
+			di = zombie_delays[level_rand() & 7];
+
+		LevelCommand	z;
+		do 	{
+			z = randzombie();
+		} while (zombieInfos[z].cost > level_brains || zombieInfos[z].level > level_index || zombieInfos[z].phase > level_cmd);
+
+		level_brains -= zombieInfos[z].cost;
+
+		if (level_brains == 0)
+			level_cmd++;
+
+		return z | di;
+	}
+	else
+	{
+		return level->cmds[level_cmd++];
+	}
 }
 
 void level_iterate(void)
@@ -1447,7 +1605,9 @@ void level_iterate(void)
 
 	if (!level_delay)
 	{
-		switch(level->cmds[level_cmd] & 0xf0)
+		level_command = level_next_command();
+
+		switch(level_command & 0xf0)
 		{
 			case LVC_DELAY_10F:
 				level_delay = 1;
@@ -1500,7 +1660,7 @@ void level_iterate(void)
 
 			bool	done = true;
 
-			switch (level->cmds[level_cmd] & 0x0f)
+			switch (level_command & 0x0f)
 			{
 				case LVC_ZOMBIE:
 					done = zombies_add(172, row, ZOMBIE_BASE, 0);
@@ -1536,14 +1696,15 @@ void level_iterate(void)
 
 				case LVC_ZOMBIE_GRAVES:
 					zombies_grave(ZOMBIE_RESURRECT);
+					break;
+
+				case LVC_END:
+					done = false;
 					break;			
 			}
 
 			if (done)
-			{
-				level_cmd++;
 				menu_progress(level_cmd, level_size);
-			}
 			else
 				level_delay = 5;
 		}
@@ -1552,6 +1713,6 @@ void level_iterate(void)
 
 bool level_complete(void)
 {
-	return level->cmds[level_cmd] == LVC_END;
+	return level_command == LVC_END;
 }
 

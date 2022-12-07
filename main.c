@@ -310,14 +310,14 @@ int main(void)
 {
 	display_init();
 
-	char li = 0;
+	char li = 18;
 	for(;;)
 	{
 		sun_init();
 		shots_init();
 		zombies_init();
 
-		level_start(GameLevels[li]);
+		level_start(li);
 
 		text_put(12, 10, VCOL_ORANGE, level->name);
 
