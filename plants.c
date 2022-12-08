@@ -4,29 +4,12 @@
 #include <c64/vic.h>
 #include <audio/sidfx.h>
 
-const char PlantsHiresData[] = {
-	#embed ctm_chars "plants.ctm"
-};
-
-const char PlantsColor0Data[] = {
-	#embed ctm_attr1 "plants.ctm"
-};
-
-const char PlantsColor1Data[] = {
-	#embed ctm_attr2 "plants.ctm"
-};
-
-#pragma align(PlantsHiresData, 256)
-#pragma align(PlantsColor0Data, 256)
-#pragma align(PlantsColor1Data, 256)
-
 Plant	plant_grid[5][10];
 char	plant_first[5];
 
-int 		sun_x, sun_y, sun_vx, sun_vy;
+__zeropage	int 		sun_x, sun_y, sun_vx, sun_vy;
 bool		sun_active;
 char		sun_power;
-char		back_color;
 
 SIDFX	SIDFXZombieHit[1] = {{
 	4000, 4096,
@@ -223,6 +206,8 @@ void plant_remove(char x, char y)
 
 void menu_draw(char x, char t)
 {
+	disp_put_tile(t, 4 * x, 0);
+#if 0
 	char * hdp = Hires + 32 * x;
 	const char * sdp = PlantsHiresData + 8 * 16 * t;
 
@@ -247,7 +232,8 @@ void menu_draw(char x, char t)
 		}
 		cdp += 40;
 		hdp += 40;
-	}	
+	}
+#endif	
 }
 
 const char color_grey[16] = {
@@ -282,6 +268,8 @@ void menu_cooldown(char x)
 		char	t = menu[x].type;
 		menu[x].cool = 0xff;
 
+		disp_ghost_tile(menu[x].type, 4 * x, 0);
+#if 0
 		char * cdp = Color + 4 * x;
 		char * hdp = Screen + 4 * x;
 
@@ -297,6 +285,7 @@ void menu_cooldown(char x)
 			cdp += 40;
 			hdp += 40;
 		}	
+#endif
 	}
 }
 
@@ -564,6 +553,9 @@ void plant_draw_borders(void)
 
 void plant_draw(char x, char y)
 {
+#if 1
+	disp_put_tile(plant_grid[y][x].type, 4 * x + 2, 4 * y + 5);
+#else
 	__assume(x < 10);
 
 	PlantType	p = plant_grid[y][x].type;
@@ -603,6 +595,7 @@ void plant_draw(char x, char y)
 		cdp += 40;
 		hdp += 40;
 	}
+#endif
 }
 
 
@@ -611,13 +604,13 @@ void plant_draw_field(char x, char y)
 	__assume(y < 20);
 	__assume(x < 40);
 
-	char * dp = HiresTab[y + 5] + x * 8 + 16;
-	char * cp = ColorTab[y + 5] + x + 2;
+	char * dp = HiresTab[y + 5] + (x + 2) * 8;
+	char * cp = ColorTab[y + 5] + (x + 2);
 	PlantType p = x >= 36 ? PT_FLOORSPACE : plant_grid[y >> 2][x >> 2].type;
 
 	const char * sp = PlantsHiresData + 8 * 16 * p + 8 * (((y & 3) << 2) | (x & 3));
 
-	for(char i=0; i<8; i++)
+	for(signed char i=7; i>=0; i--)
 		dp[i] = sp[i];
 	cp[0] = PlantsColor0Data[16 * p + (((y & 3) << 2) | (x & 3))];
 }

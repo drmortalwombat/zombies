@@ -4,8 +4,8 @@
 #include <c64/vic.h>
 
 const Level	*	level;
-char			level_cmd, level_size, level_conveyor, level_index, level_phase;
-unsigned		level_delay, level_brains;
+char			level_cmd, level_size, level_conveyor, level_index, level_phase, level_delay;
+unsigned		level_brains;
 LevelCommand	level_command;
 
 
@@ -15,7 +15,6 @@ struct ZombieInfo
 {
 	char			cost, num;
 	char			phase, level;
-	const char *	name;
 };
 
 static const char	delayinfo[11] = {
@@ -23,14 +22,14 @@ static const char	delayinfo[11] = {
 };
 
 static const ZombieInfo	zombieInfos[LVC_ZOMBIE_GRAVES] = {
-	[LVC_ZOMBIE] 			= {1,  25, 0, 0, "zombie"},
-	[LVC_ZOMBIE_CONE] 		= {3,  13, 3, 0, "cone"},
-	[LVC_ZOMBIE_POLE]		= {4,   8, 4, 1, "pole"},
-	[LVC_ZOMBIE_BUCKET]		= {6,   8, 5, 2, "bucket"},
-	[LVC_ZOMBIE_PAPER]		= {5,   4, 5, 3, "paper"},
-	[LVC_ZOMBIE_SCREENDOOR]	= {7,   3, 5, 4, "screendoor"},
-	[LVC_ZOMBIE_FOOTBALL]	= {10,  2, 6, 5, "football"},
-	[LVC_ZOMBIE_DANCER]		= {15,  1, 6, 6, "dancer"}
+	[LVC_ZOMBIE] 			= {1,  25, 0, 0},
+	[LVC_ZOMBIE_CONE] 		= {3,  13, 3, 0},
+	[LVC_ZOMBIE_POLE]		= {4,   8, 4, 1},
+	[LVC_ZOMBIE_BUCKET]		= {6,   8, 5, 2},
+	[LVC_ZOMBIE_PAPER]		= {5,   4, 5, 3},
+	[LVC_ZOMBIE_SCREENDOOR]	= {7,   3, 5, 4},
+	[LVC_ZOMBIE_FOOTBALL]	= {10,  2, 6, 5},
+	[LVC_ZOMBIE_DANCER]		= {15,  1, 6, 6}
 };
 
 static LevelCommand	zshuffle[64];
@@ -531,7 +530,9 @@ static const Level	LevelDay1 = {
 	300,
 	SF_PEASHOOTER,
 	LevelDayCmds1,
-	TUNE_GAME_1
+	TUNE_GAME_1,
+	PT_PEASHOOTER_0,
+	P"PLANT PEASHOOTERS\nTO PROTECT\nAGAINST ZOMBIES"
 };
 
 static const Level	LevelDay2 = {
@@ -542,7 +543,9 @@ static const Level	LevelDay2 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER,
 	LevelDayCmds2,
-	TUNE_GAME_2
+	TUNE_GAME_2,
+	PT_SUNFLOWER_0,
+	P"SUNFLOWERS\nCOLLECT MORE\nSUN LIGHT"
 };
 
 static const Level	LevelDay3 = {
@@ -553,7 +556,9 @@ static const Level	LevelDay3 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB,
 	LevelDayCmds3,
-	TUNE_GAME_2
+	TUNE_GAME_2,
+	PT_CHERRYBOMB,
+	P"BLOW UP ALL\nZOMBIES IN AN AREA"
 };
 
 static const Level	LevelDay4 = {
@@ -564,7 +569,9 @@ static const Level	LevelDay4 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT,
 	LevelDayCmds4,
-	TUNE_GAME_1
+	TUNE_GAME_1,
+	PT_WALLNUT_0,
+	P"WALLNUTS PROTECT\nOTHER PLANTS"
 };
 
 static const Level	LevelDay6 = {
@@ -575,7 +582,9 @@ static const Level	LevelDay6 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE,
 	LevelDayCmds6,
-	TUNE_GAME_3
+	TUNE_GAME_3,
+	PT_POTATOMINE_0,
+	P"POTATO MINES\nEXPLODE ON\nCONTACT"
 };
 
 static const Level	LevelDay7 = {
@@ -586,7 +595,9 @@ static const Level	LevelDay7 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA,
 	LevelDayCmds7,
-	TUNE_GAME_2
+	TUNE_GAME_2,
+	PT_SNOWPEA_0,
+	P"SNOW PEAS FREEZE\nAND SLOW THE ENEMY"
 };
 
 static const Level	LevelDay8 = {

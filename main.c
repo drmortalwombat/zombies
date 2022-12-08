@@ -15,7 +15,9 @@
 #include "lawnmower.h"
 #include "seeds.h"
 
-#pragma region( main, 0x0880, 0x9400, , , {code, data, bss, heap, stack} )
+#pragma region( stack, 0x0400, 0x0800, , , {stack})
+
+#pragma region( main, 0x0880, 0x9400, , , {code, data, bss, heap} )
 #pragma stacksize(1024)
 
 signed char cursorX, cursorY, menuX;
@@ -310,7 +312,7 @@ int main(void)
 {
 	display_init();
 
-	char li = 18;
+	char li = 5;
 	for(;;)
 	{
 		sun_init();
@@ -320,6 +322,19 @@ int main(void)
 		level_start(li);
 
 		text_put(12, 10, VCOL_ORANGE, level->name);
+
+		if (level->tutorialPlant != PT_NONE_DAY)
+		{
+			disp_put_tile(level->tutorialPlant, 18, 13);
+			text_put(2, 18, VCOL_YELLOW, level->tutorialText);
+
+			for(int i=0; i<200; i++)
+				vic_waitFrame();
+
+			plant_row_draw(2);
+			plant_row_draw(3);
+			plant_row_draw(4);
+		}
 
 		text_put(11, 14, VCOL_ORANGE, P"READY...");
 		for(int i=0; i<40; i++)
@@ -350,6 +365,10 @@ int main(void)
 
 		if (lost)
 		{
+			text_put( 9, 10, VCOL_GREEN, P"THE ZOMBIES");
+			text_put(11, 12, VCOL_GREEN,  P"ATE YOUR");
+			text_put(13, 14, VCOL_GREEN,   P"BRAINS");
+
 			music_init(TUNE_LOST);
 		}
 		else

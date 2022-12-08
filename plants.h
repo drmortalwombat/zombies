@@ -1,87 +1,7 @@
 #ifndef PLANTS_H
 #define PLANTS_H
 
-#pragma compile("plants.c")
-
-enum PlantType
-{
-	PT_NONE_DAY,
-	PT_NONE_NIGHT,
-
-	PT_TOMBSTONE,
-	PT_CRATER,
-
-	PT_GROUND,
-
-	PT_PEASHOOTER_0,
-	PT_PEASHOOTER_1,
-	PT_SUNFLOWER_0,
-	PT_SUNFLOWER_1,
-	PT_WALLNUT_0,
-	PT_WALLNUT_1,
-	PT_CHERRYBOMB,
-	PT_TESTSHROOM,
-	PT_CACTUS,
-	PT_POTATOMINE_0,
-	PT_POTATOMINE_1,
-	PT_REPEATER_0,
-	PT_REPEATER_1,
-
-	PT_SUN,
-	PT_SHOVEL,
-
-	PT_SNOWPEA_0,
-	PT_SNOWPEA_1,
-	PT_POTATOMINE_HIDDEN,
-	PT_POTATOMINE_EXPLODED,
-
-	PT_EXPLOSION_0,
-	PT_EXPLOSION_1,
-	PT_EXPLOSION_2,
-	PT_EXPLOSION_3,
-
-	PT_CHOMPER_0,
-	PT_CHOMPER_1,
-	PT_CHOMPER_EAT_0,
-	PT_CHOMPER_EAT_1,
-
-	PT_PUFFSHROOM_0,
-	PT_PUFFSHROOM_1,
-
-	PT_SUNSHROOM_0,
-	PT_SUNSHROOM_1,
-
-	PT_SUNSHROOM_BIG_0,
-	PT_SUNSHROOM_BIG_1,
-
-	PT_FUMESHROOM_0,
-	PT_FUMESHROOM_1,
-
-	PT_GRAVEDIGGER_0,
-	PT_GRAVEDIGGER,
-
-	PT_SCAREDYSHROOM_0,
-	PT_SCAREDYSHROOM_1,
-
-	PT_SCAREDYSHROOM_DUCK,
-
-	PT_ICESHROOM,
-	PT_SNOWFLAKE,
-
-	PT_DOOMSHROOM,
-	PT_DOOMCLOUD,
-
-	PT_CONVEYOR,
-	PT_FLOORSPACE,
-	PT_FLOORSPACE_MOWER,
-
-	PT_BORDER,
-	PT_CARDSLOT,
-	PT_FREESLOT,
-	PT_GO,
-
-	NUM_PLANT_TYPES
-};
+#include "display.h"
 
 struct Plant
 {	
@@ -124,7 +44,6 @@ extern char		menu_size, menu_first;
 extern int 		sun_x, sun_y, sun_vx, sun_vy;
 extern bool		sun_active;
 extern char		sun_power;
-extern char		back_color;
 extern char		back_tile;
 extern const char color_grey[16];
 
@@ -182,5 +101,8 @@ void shots_advance(char step);
 void plants_iterate(char y);
 
 void plants_animate(char y);
+
+#pragma compile("plants.c")
+
 
 #endif

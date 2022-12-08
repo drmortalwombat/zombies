@@ -14,6 +14,22 @@ const char SpriteData[] = {
 
 #pragma data(data)
 
+const char PlantsHiresData[] = {
+	#embed ctm_chars "plants.ctm"
+};
+
+const char PlantsColor0Data[] = {
+	#embed ctm_attr1 "plants.ctm"
+};
+
+const char PlantsColor1Data[] = {
+	#embed ctm_attr2 "plants.ctm"
+};
+
+#pragma align(PlantsHiresData, 256)
+#pragma align(PlantsColor0Data, 256)
+#pragma align(PlantsColor1Data, 256)
+
 const char FontData[] = {
 	#embed ctm_chars "chars.ctm"
 };
@@ -51,6 +67,8 @@ __striped char * const ScreenTab[25] = {
 	Screen + 20 * 40, Screen + 21 * 40, Screen + 22 * 40, Screen + 23 * 40,
 	Screen + 24 * 40
 };
+
+__zeropage	char		back_color;
 
 __interrupt void music_irq(void)
 {
@@ -99,20 +117,21 @@ void display_init(void)
 	{
 		bool	music = (i == 0) || (i == 3);
 
-		zombieMux[i] = rirq_alloc(ZOMBIE_SPRITES * 4 + 1 + music);
+		RIRQCode	*	zm = rirq_alloc(ZOMBIE_SPRITES * 4 + 1 + music);
 
+		zombieMux[i] = zm;
 		for(int j=0; j<ZOMBIE_SPRITES; j++)
 		{
-			rirq_write(zombieMux[i], 0 * ZOMBIE_SPRITES + j, &(vic.spr_pos[j].y), 50 + 5 * 8 + 4 * 8 * i + 8);
-			rirq_write(zombieMux[i], 1 * ZOMBIE_SPRITES + j, &(vic.spr_pos[j].x), 0);
-			rirq_write(zombieMux[i], 2 * ZOMBIE_SPRITES + j, Screen + 0x3f8 + j, 16);
-			rirq_write(zombieMux[i], 3 * ZOMBIE_SPRITES + j, &(vic.spr_color[j]), VCOL_MED_GREY);
+			rirq_write(zm, 0 * ZOMBIE_SPRITES + j, &(vic.spr_pos[j].y), 50 + 5 * 8 + 4 * 8 * i + 8);
+			rirq_write(zm, 1 * ZOMBIE_SPRITES + j, &(vic.spr_pos[j].x), 0);
+			rirq_write(zm, 2 * ZOMBIE_SPRITES + j, Screen + 0x3f8 + j, 16);
+			rirq_write(zm, 3 * ZOMBIE_SPRITES + j, &(vic.spr_color[j]), VCOL_MED_GREY);
 		}
-		rirq_write(zombieMux[i], 4 * ZOMBIE_SPRITES, &vic.spr_msbx, 0);
+		rirq_write(zm, 4 * ZOMBIE_SPRITES, &vic.spr_msbx, 0);
 		if (music)
-			rirq_call(zombieMux[i], 4 * ZOMBIE_SPRITES + 1, music_irq);
+			rirq_call(zm, 4 * ZOMBIE_SPRITES + 1, music_irq);
 
-		rirq_set(i, 50 + 5 * 8 + 4 * 8 * i, zombieMux[i]);
+		rirq_set(i, 50 + 5 * 8 + 4 * 8 * i, zm);
 	}
 
 	rirq_build(&menuMux, 5);
@@ -258,27 +277,143 @@ void text_put(char x, char y, char color, const char * t)
 
 	while (char c = t[ci])
 	{
-		const char * fp = FontData + 8 * (c & 0x3f);
-		cp[0] = color;
-		cp[1] = color;
-
-		text_pline(hp, fp[0], 0);
-
-		char pl = 0;
-		for(char i=0; i<7; i++)
+		if (c == '\n')
 		{
-			char l = fp[i];
-			char n = fp[i + 1];
+			y += 2;
+			hp = HiresTab[y] + 8 * x;
+			cp = ColorTab[y] + x;
+		}
+		else
+		{
+			const char * fp = FontData + 8 * (c & 0x3f);
+			cp[0] = color;
+			cp[1] = color;
 
-			text_pline(hp + i + 1, (pl | l | n) | ((pl | l) >> 1), l);
-			pl = l;
+			text_pline(hp, fp[0], 0);
+
+			char pl = 0;
+			for(char i=0; i<7; i++)
+			{
+				char l = fp[i];
+				char n = fp[i + 1];
+
+				text_pline(hp + i + 1, (pl | l | n) | ((pl | l) >> 1), l);
+				pl = l;
+			}
+
+			text_pline(hp + 320, fp[6] | (fp[6] >> 1), 0);
+			text_pline(hp + 321, fp[6] >> 1, 0);
+
+			hp += 16;
+			cp += 2;
 		}
 
-		text_pline(hp + 320, fp[6] | (fp[6] >> 1), 0);
-		text_pline(hp + 321, fp[6] >> 1, 0);
-
 		ci++;
-		hp += 16;
-		cp += 2;
 	}
+}
+
+static inline char plant_color_map(char c)
+{
+	return ((c & 0xf0) == (VCOL_PURPLE << 4)) ? (c & 0x0f) | back_color : c;
+}
+
+void disp_put_char(PlantType type, char sx, char sy, char dx, char dy)
+{
+	__assume(dx < 40);
+	__assume(dy < 25);
+	__assume(sx < 4);
+	__assume(sy < 4);
+
+	char * hdp = HiresTab[dy] + 8 * dx;
+	const char * sdp = PlantsHiresData + 8 * 16 * type + 8 * sx + 32 * sy;
+
+	for(char j=0; j<8; j++)
+		hdp[j] = sdp[j];
+
+	char * cdp = ColorTab[dy];
+	hdp = ScreenTab[dy];
+
+	const char * scdp = PlantsColor0Data + 16 * type + 4 * sy;
+	const char * shdp = PlantsColor1Data + 16 * type + 4 * sy;
+
+	cdp[dx] = scdp[sx];
+	hdp[dx] = plant_color_map(shdp[sx]);
+}
+
+void disp_put_tile(PlantType type, char dx, char dy)
+{
+	__assume(dx < 36);
+	__assume(dy < 21);
+
+	char * hdp = HiresTab[dy] + 8 * dx;
+	const char * sdp = PlantsHiresData + 8 * 16 * type;
+
+	for(char i=0; i<4; i++)
+	{
+		for(signed char j=31; j>=0; j--)
+			hdp[j] = sdp[j];
+		hdp += 320;
+		sdp += 32;
+	}
+
+	char * cdp = ColorTab[dy] + dx;
+	hdp = ScreenTab[dy] + dx;
+
+	const char * scdp = PlantsColor0Data + 16 * type;
+	const char * shdp = PlantsColor1Data + 16 * type;
+
+	for(char i=0; i<4; i++)
+	{
+		for(char j=0; j<4; j++)
+		{
+			cdp[j] = scdp[j];
+			hdp[j] = plant_color_map(shdp[j]);
+		}
+		cdp += 40;
+		hdp += 40;
+		scdp += 4;
+		shdp += 4;
+	}
+}
+
+void disp_ghost_tile(PlantType type, char dx, char dy)
+{
+	__assume(dx < 36);
+	__assume(dy < 21);
+
+	char * cdp = ColorTab[dy] + dx;
+	char * hdp = ScreenTab[dy] + dx;
+
+	for(char i=0; i<4; i++)
+	{
+		for(char j=0; j<4; j++)
+		{
+			cdp[j] = color_grey[PlantsColor0Data[16 * type + 4 * i + j] & 0x0f];
+			char c = plant_color_map(PlantsColor1Data[16 * type + 4 * i + j]);
+			hdp[j] = color_grey[c & 0x0f] | (color_grey[c >> 4] << 4);
+		}
+		cdp += 40;
+		hdp += 40;
+	}	
+}
+
+void disp_color_tile(PlantType type, char dx, char dy)
+{
+	__assume(dx < 36);
+	__assume(dy < 21);
+
+	char * cdp = ColorTab[dy] + dx;
+	char * hdp = ScreenTab[dy] + dx;
+
+	for(char i=0; i<4; i++)
+	{
+		for(char j=0; j<4; j++)
+		{
+			cdp[j] = PlantsColor0Data[16 * type + 4 * i + j];
+			char c = plant_color_map(PlantsColor1Data[16 * type + 4 * i + j]);
+			hdp[j] = c;
+		}
+		cdp += 40;
+		hdp += 40;
+	}	
 }

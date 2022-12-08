@@ -52,6 +52,8 @@ struct Level
 	unsigned				seeds;
 	const LevelCommand	*	cmds;
 	Tune					tune;
+	PlantType				tutorialPlant;
+	const char *			tutorialText;
 };
 
 extern const Level	*	GameLevels[];
