@@ -14,6 +14,7 @@
 #include "levels.h"
 #include "lawnmower.h"
 #include "seeds.h"
+#include "gamemenu.h"
 
 #pragma region( stack, 0x0400, 0x0800, , , {stack})
 
@@ -25,6 +26,8 @@ unsigned	sun_count;
 
 void cursor_show(char x, char y)
 {
+	cursorX = x;
+	cursorY = y;
 	spr_set(6, true, 24 + x * 32, 50 + 8 * 5 + y * 32, 16 + 108, VCOL_WHITE, false, true, true);
 }
 
@@ -144,7 +147,7 @@ void cursor_select(void)
 	}
 }
 
-bool game_level_loop(void)
+GameResponse game_level_loop(void)
 {
 	char	row = 0, warm = 0;
 	sun_count	= 500;
@@ -163,7 +166,7 @@ bool game_level_loop(void)
 			if (row & 1)
 			{
 				if (zombies_advance(row >> 1))
-					return true;
+					return GMENU_FAILED;
 			}
 			else
 				plants_iterate(row >> 1);
@@ -177,7 +180,7 @@ bool game_level_loop(void)
 				{
 					countdown--;
 					if (countdown == 0)
-						return false;
+						return GMENU_COMPLETED;
 				}
 			}
 
@@ -262,7 +265,17 @@ bool game_level_loop(void)
 				menu_set(9);
 				break;
 			case KSCAN_SPACE | KSCAN_QUAL_DOWN:
+			case KSCAN_RETURN | KSCAN_QUAL_DOWN:
 				cursor_select();
+				break;
+			case KSCAN_STOP | KSCAN_QUAL_DOWN:
+				{
+					GameResponse	gr = gamemenu_ingame();
+					plant_grid_draw();
+					if (gr != GMENU_CONTINUE)
+						return gr;
+					sirq = rirq_count;
+				}
 				break;
 		}
 
@@ -308,83 +321,153 @@ bool game_level_loop(void)
 	}
 }
 
-int main(void)
-{
-	display_init();
+const char * level_menu[] = {
+	"DAY",
+	"NIGHT",
+	"NIGHTMARE",
+	nullptr
+};
 
-	char li = 5;
+void game_loop(char li)
+{
+	GameResponse gr;
+
 	for(;;)
 	{
 		sun_init();
 		shots_init();
 		zombies_init();
 
-		level_start(li);
-
-		text_put(12, 10, VCOL_ORANGE, level->name);
-
-		if (level->tutorialPlant != PT_NONE_DAY)
+		gr = level_start(li);
+		
+		if (gr == GMENU_START)
 		{
-			disp_put_tile(level->tutorialPlant, 18, 13);
-			text_put(2, 18, VCOL_YELLOW, level->tutorialText);
+			text_put(12, 10, VCOL_ORANGE, level->name);
 
-			for(int i=0; i<200; i++)
+			text_put(11, 14, VCOL_ORANGE, P"READY...");
+			for(int i=0; i<40; i++)
 				vic_waitFrame();
-
 			plant_row_draw(2);
-			plant_row_draw(3);
-			plant_row_draw(4);
+
+			text_put(12, 14, VCOL_ORANGE, P"SET...");
+			for(int i=0; i<40; i++)
+				vic_waitFrame();
+			plant_row_draw(2);
+
+			text_put(11, 14, VCOL_ORANGE, P"PLANT!");
+			for(int i=0; i<40; i++)
+				vic_waitFrame();
+			plant_row_draw(2);
+			plant_row_draw(1);
+
+			menu_set(1);
+			cursor_show(0, 2);
+			cursor_move(0, 0);
+
+			music_patch_voice3(false);
+			gr = game_level_loop();
+			music_patch_voice3(true);
+
+			spr_show(6, false);
+			spr_show(7, false);
 		}
 
-		text_put(11, 14, VCOL_ORANGE, P"READY...");
-		for(int i=0; i<40; i++)
-			vic_waitFrame();
-		plant_row_draw(2);
-
-		text_put(12, 14, VCOL_ORANGE, P"SET...");
-		for(int i=0; i<40; i++)
-			vic_waitFrame();
-		plant_row_draw(2);
-
-		text_put(11, 14, VCOL_ORANGE, P"PLANT!");
-		for(int i=0; i<40; i++)
-			vic_waitFrame();
-		plant_row_draw(2);
-		plant_row_draw(1);
-
-		menu_set(1);
-		cursor_show(0, 0);
-		cursor_move(0, 0);
-
-		music_patch_voice3(false);
-		bool lost = game_level_loop();
-		music_patch_voice3(true);
-
-		spr_show(6, false);
-		spr_show(7, false);
-
-		if (lost)
+		switch (gr)
 		{
+		case GMENU_FAILED:
 			text_put( 9, 10, VCOL_GREEN, P"THE ZOMBIES");
 			text_put(11, 12, VCOL_GREEN,  P"ATE YOUR");
 			text_put(13, 14, VCOL_GREEN,   P"BRAINS");
 
 			music_init(TUNE_LOST);
-		}
-		else
-		{
+			for(int i=0; i<240; i++)
+				vic_waitFrame();			
+			break;
+		case GMENU_COMPLETED:
 			music_init(TUNE_VICTORY);
 			li++;
-		}
+			for(int i=0; i<240; i++)
+				vic_waitFrame();			
+			break;
+		case GMENU_EXIT:
+			return;
 
-		for(int i=0; i<240; i++)
-			vic_waitFrame();			
+		case GMENU_RESTART:
+			break;
+		}
 
 		music_active = false;
 
 		zombies_clear();
 	}
+}
 
+int main(void)
+{
+	display_init();
+
+	for(;;)
+	{
+		back_color = VCOL_GREEN << 4;
+		back_tile = PT_NONE_DAY_0;
+
+		plant_draw_borders();
+		menu_init(0);
+		mower_init();
+		plant_grid_clear(0b11111);
+
+		plant_grid[0][3].type = PT_SUNFLOWER_0;
+		plant_grid[0][0].type = PT_SUNFLOWER_1;
+		plant_grid[1][1].type = PT_SUNFLOWER_1;
+		plant_grid[1][5].type = PT_SUNFLOWER_0;
+		plant_grid[2][2].type = PT_SUNFLOWER_0;
+		plant_grid[3][3].type = PT_SUNFLOWER_1;
+		plant_grid[4][2].type = PT_SUNFLOWER_0;
+		plant_grid[4][5].type = PT_SUNFLOWER_1;
+
+		plant_grid[1][8].type = PT_TOMBSTONE;
+		plant_grid[2][5].type = PT_TOMBSTONE;
+		plant_grid[3][7].type = PT_TOMBSTONE;
+		plant_grid[3][9].type = PT_TOMBSTONE;
+
+		plant_grid_draw();
+
+		for(char i=0; i<10; i++)
+			disp_put_tile(PT_FENCE, 4 * i, 0);
+
+		text_put_2( 3, 1, VCOL_LT_GREEN, VCOL_GREEN, P"VEGGIES");
+		text_put( 18, 2, VCOL_WHITE, P"VS");
+		text_put_2( 23, 1, VCOL_LT_GREY, VCOL_MED_GREY, P"UNDEAD");
+
+		text_put( 5, 18, VCOL_LT_BLUE, P"C64 CONVERSION");
+		text_put( 4, 19, VCOL_LT_GREY, P"DR.MORTAL WOMBAT");
+		text_put( 15, 21, VCOL_LT_BLUE, P"MUSIC");
+		text_put( 2, 22, VCOL_LT_GREY, P"ARRANGED BY CRISPS");
+		text_put( 5, 23, VCOL_LT_GREY, P"OST BY LAURA S.");
+
+		music_init(TUNE_TITLE);
+		music_active = true;
+
+		char	ls = gamemenu_query(level_menu);
+
+
+		char li = 0;
+
+		switch (ls)
+		{
+		case 0:
+			li = 0;
+			break;
+		case 1:
+			li = 9;
+			break;
+		case 2:
+			li = 18;
+			break;
+		}
+
+		game_loop(li);
+	}
 
 	return 0;
 }

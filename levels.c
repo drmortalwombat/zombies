@@ -608,7 +608,9 @@ static const Level	LevelDay8 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER,
 	LevelDayCmds8,
-	TUNE_GAME_1
+	TUNE_GAME_1,
+	PT_CHOMPER_0,
+	P"CHOMPER EATS A\nZOMBIE WHOLE",
 };
 
 static const Level	LevelDay9 = {
@@ -619,7 +621,9 @@ static const Level	LevelDay9 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER,
 	LevelDayCmds9,
-	TUNE_GAME_3
+	TUNE_GAME_3,
+	PT_REPEATER_0,
+	P"REPEATER FIRES TWO\nPEAS AT A TIME"
 };
 
 static const Level	LevelDay10 = {
@@ -1245,7 +1249,9 @@ static const Level	LevelNight1 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_PUFFSHROOM,
 	LevelNightCmds1,
-	TUNE_GAME_4
+	TUNE_GAME_4,
+	PT_PUFFSHROOM_0,
+	P"PUFF SHROOMS ARE\nFREE BUT LIMITED"
 };
 
 static const Level	LevelNight2 = {
@@ -1256,7 +1262,9 @@ static const Level	LevelNight2 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_PUFFSHROOM | SF_SUNSHROOM,
 	LevelNightCmds2,
-	TUNE_GAME_5
+	TUNE_GAME_5,
+	PT_SUNSHROOM_0,
+	P"SUN SHROOMS GIVE\nSMALL SUN AT NIGHT"
 };
 
 static const Level	LevelNight3 = {
@@ -1267,7 +1275,9 @@ static const Level	LevelNight3 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_PUFFSHROOM | SF_SUNSHROOM| SF_FUMESHROOM,
 	LevelNightCmds3,
-	TUNE_GAME_6
+	TUNE_GAME_6,
+	PT_FUMESHROOM_0,
+	P"FUME SHROOMS SHOOT\nPENETRATING FUMES"
 };
 
 static const Level	LevelNight4 = {
@@ -1278,7 +1288,9 @@ static const Level	LevelNight4 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_PUFFSHROOM | SF_SUNSHROOM| SF_FUMESHROOM | SF_GRAVEDIGGER,
 	LevelNightCmds4,
-	TUNE_GAME_4
+	TUNE_GAME_4,
+	PT_GRAVEDIGGER,
+	P"GRAVE BUSTER EATS\nGRAVESTONES"
 };
 
 static const Level	LevelNight6 = {
@@ -1300,7 +1312,9 @@ static const Level	LevelNight7 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_PUFFSHROOM | SF_SUNSHROOM| SF_FUMESHROOM | SF_GRAVEDIGGER | SF_SCAREDYSHROOM,
 	LevelNightCmds7,
-	TUNE_GAME_6
+	TUNE_GAME_6,
+	PT_SCAREDYSHROOM_0,
+	P"SCAREDY SHROOM IS\nA COWARD"
 };
 
 static const Level	LevelNight8 = {
@@ -1311,7 +1325,9 @@ static const Level	LevelNight8 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_PUFFSHROOM | SF_SUNSHROOM| SF_FUMESHROOM | SF_GRAVEDIGGER | SF_SCAREDYSHROOM | SF_ICESHROOM,
 	LevelNightCmds8,
-	TUNE_GAME_4
+	TUNE_GAME_4,
+	PT_ICESHROOM,
+	P"ICE SHROOM FREEZES\nALL ZOMBIES ON\nSCREEN"
 };
 
 static const Level	LevelNight9 = {
@@ -1322,7 +1338,9 @@ static const Level	LevelNight9 = {
 	50,
 	SF_SUNFLOWER | SF_PEASHOOTER | SF_CHERRYBOMB | SF_WALLNUT | SF_POTATOMINE | SF_SNOWPEA | SF_CHOMPER | SF_REPEATER | SF_PUFFSHROOM | SF_SUNSHROOM| SF_FUMESHROOM | SF_GRAVEDIGGER | SF_SCAREDYSHROOM | SF_ICESHROOM | SF_DOOMSHROOM,
 	LevelNightCmds9,
-	TUNE_GAME_5
+	TUNE_GAME_5,
+	PT_DOOMSHROOM,
+	P"DOOM SHROOM\nDESTROYS ALL\nEMENIES IN RANGE"
 };
 
 static const Level	LevelNight10 = {
@@ -1409,8 +1427,10 @@ static const Tune	level_tunes[8] = {
 
 
 
-void level_start(char li)
+GameResponse level_start(char li)
 {
+	GameResponse 	gs = GMENU_START;
+
 	level_cmd = 0;
 	level_delay = 0;
 	level_conveyor = 0;
@@ -1470,12 +1490,12 @@ void level_start(char li)
 	if (level->flags & LF_NIGHT)
 	{
 		back_color = VCOL_PURPLE << 4;
-		back_tile = PT_NONE_NIGHT;
+		back_tile = PT_NONE_NIGHT_0;
 	}
 	else
 	{
 		back_color = VCOL_GREEN << 4;
-		back_tile = PT_NONE_DAY;
+		back_tile = PT_NONE_DAY_0;
 	}
 
 	plant_draw_borders();
@@ -1502,6 +1522,34 @@ void level_start(char li)
 
 	plant_grid_draw();
 
+
+	if (level->tutorialPlant != PT_NONE_DAY_0)
+	{
+		if (level->flags & LF_FIXSEED)
+			music_init(level->tune);
+		else
+			music_init(TUNE_SEEDS);
+		
+		music_active = true;
+
+		disp_put_tile(level->tutorialPlant, 18, 13);
+		text_put(2, 18, VCOL_YELLOW, level->tutorialText);
+
+		for(int i=0; i<200; i++)
+			vic_waitFrame();
+
+		plant_row_draw(2);
+		plant_row_draw(3);
+		plant_row_draw(4);
+
+		plant_grid_draw();
+	}
+	else if (!(level->flags & LF_FIXSEED))
+	{
+		music_init(TUNE_SEEDS);
+		music_active = true;		
+	}
+
 	menu_progress(0, level_size);
 
 	unsigned	seeds = level->seeds;
@@ -1526,7 +1574,7 @@ void level_start(char li)
 		}
 		else
 		{
-			seeds_edit_menu(seeds, level->slots);
+			gs = seeds_edit_menu(seeds, level->slots);
 			plant_grid_draw();
 		}
 
@@ -1534,10 +1582,12 @@ void level_start(char li)
 			menu_add_item(PT_SHOVEL, 0, 0, true, false);
 	}
 
-
-	music_init(level->tune);
+	if (!(level->flags & LF_FIXSEED))
+		music_init(level->tune);
 
 	music_active = true;
+
+	return gs;
 }
 
 static const LevelCommand zombie_delays[8] = {
@@ -1560,7 +1610,7 @@ LevelCommand level_next_command(void)
 		{
 			do 	{
 				di = (level_rand() & 3) + 6;
-				level_brains = ((long)((1 + level_cmd) * (4 + level_index)) * delayinfo[di]) >> 8;
+				level_brains = ((unsigned long)((unsigned)(1 + level_cmd) * (unsigned)(4 + level_index)) * delayinfo[di]) >> 8;
 			} while (level_brains < 1);
 
 			di <<= 4;

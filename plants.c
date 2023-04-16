@@ -78,10 +78,22 @@ void plant_grid_clear(char rows)
 {
 	for(char y=0; y<5; y++)
 	{
-		char	t = (rows & 1) ? back_tile : PT_GROUND;
+		char	t = PT_GROUND;
+		unsigned m = 0;
+
+		if (rows & 1)
+		{
+			t = back_tile;
+			m = rand();
+		}
+
 		rows >>= 1;
+
 		for(char x=0; x<10; x++)
-			plant_grid[y][x].type = t;
+		{
+			plant_grid[y][x].type = t | (m & 1);
+			m >>= 1;
+		}
 		plant_first[y] = 0xff;
 	}
 }
@@ -958,7 +970,7 @@ void plants_iterate(char y)
 						else if (y < 2)
 							ey = y + 3;
 						for(char i=sy; i<ey; i++)
-							zombies_splash(s * 16 + 28, i, 48, 127);
+							zombies_splash(s * 16 + 28, i, 48, 255);
 					}
 					sidfx_play(2, SIDFXExplosion, 1);					
 					break;

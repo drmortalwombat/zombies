@@ -2,6 +2,7 @@
 #define SEEDS_H
 
 #include "plants.h"
+#include "gamemenu.h"
 
 enum Seeds
 {
@@ -41,7 +42,7 @@ enum SeedFlags
 	SF_SUNSHROOM		=	1u << SD_SUNSHROOM,
 	SF_FUMESHROOM		=	1u << SD_FUMESHROOM,
 	SF_GRAVEDIGGER		=	1u << SD_GRAVEDIGGER,
-	
+
 	SF_SCAREDYSHROOM	=	1u << SD_SCAREDYSHROOM,
 	SF_ICESHROOM		=	1u << SD_ICESHROOM,
 	SF_DOOMSHROOM		=	1u << SD_DOOMSHROOM
@@ -57,7 +58,7 @@ struct SeedInfo
 
 extern const SeedInfo seed_info[16];
 
-void seeds_edit_menu(SeedFlags seeds, char slots);
+GameResponse seeds_edit_menu(SeedFlags seeds, char slots);
 
 #pragma compile("seeds.c")
 

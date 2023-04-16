@@ -45,10 +45,21 @@ void seeds_edit_open(void)
 	disp_put_char(PT_BORDER, 2, 2, 32, 22);
 }
 
-void seeds_edit_menu(SeedFlags seeds, char slots)
+static const char seed_menu_x[18] = {
+	8, 12, 16, 20, 24, 28,
+	8, 12, 16, 20, 24, 28,
+	8, 12, 16, 20, 24, 28	
+};
+
+static const char seed_menu_y[18] = {
+	7, 7, 7, 7, 7, 7,
+	12, 12, 12, 12, 12, 12,
+	17, 17, 17, 17, 17, 17
+};
+
+GameResponse seeds_edit_menu(SeedFlags seeds, char slots)
 {
-	music_init(TUNE_SEEDS);
-	music_active = true;
+	GameResponse	rs = GMENU_CONTINUE;
 
 	seeds_edit_open();
 
@@ -60,8 +71,8 @@ void seeds_edit_menu(SeedFlags seeds, char slots)
 	{
 		if (seeds & (1u << i))
 		{
-			char	x = 8 + 4 * (n % 6);
-			char	y = 7 + 5 * (n / 6);
+			char	x = seed_menu_x[n];
+			char	y = seed_menu_y[n];
 
 			disp_put_tile(seed_info[i].plant, x, y);
 			disp_put_price(seed_info[i].cost, x, y + 4);
@@ -75,8 +86,8 @@ void seeds_edit_menu(SeedFlags seeds, char slots)
 
 	while (n < 17)
 	{
-		char	x = 8 + 4 * (n % 6);
-		char	y = 7 + 5 * (n / 6);
+		char	x = seed_menu_x[n];
+		char	y = seed_menu_y[n];
 
 		disp_put_tile(PT_CARDSLOT, x, y);
 		disp_put_noprice(x, y + 4);
@@ -85,8 +96,8 @@ void seeds_edit_menu(SeedFlags seeds, char slots)
 	}
 
 	{
-		char	x = 8 + 4 * (n % 6);
-		char	y = 7 + 5 * (n / 6);
+		char	x = seed_menu_x[n];
+		char	y = seed_menu_y[n];
 
 		disp_put_tile(PT_GO, x, y);
 		disp_put_noprice(x, y + 4);
@@ -100,7 +111,8 @@ void seeds_edit_menu(SeedFlags seeds, char slots)
 	bool	joydown = false;
 
 	char	mx = 0, my = 0;
-	for(;;)
+
+	while (rs == GMENU_CONTINUE)
 	{
 		char		y = 49 + 8 * 7 + my * 40;
 		unsigned	x = 23 + 8 * 8 + mx * 32;
@@ -117,23 +129,60 @@ void seeds_edit_menu(SeedFlags seeds, char slots)
 		switch (keyb_key)
 		{
 			case KSCAN_CSR_RIGHT | KSCAN_QUAL_DOWN:
+			case KSCAN_D | KSCAN_QUAL_DOWN:
 				if (mx < 5)
 					mx++;
 				break;
 			case KSCAN_CSR_RIGHT | KSCAN_QUAL_SHIFT | KSCAN_QUAL_DOWN:
+			case KSCAN_A | KSCAN_QUAL_DOWN:
 				if (mx > 0)
 					mx--;
 				break;
 			case KSCAN_CSR_DOWN | KSCAN_QUAL_DOWN:
+			case KSCAN_S | KSCAN_QUAL_DOWN:
 				if (my < 2)
 					my++;
 				break;
 			case KSCAN_CSR_DOWN | KSCAN_QUAL_SHIFT | KSCAN_QUAL_DOWN:
+			case KSCAN_W | KSCAN_QUAL_DOWN:
 				if (my > 0)
 					my--;
 				break;
 			case KSCAN_SPACE | KSCAN_QUAL_DOWN:
+			case KSCAN_RETURN | KSCAN_QUAL_DOWN:
 				select = true;
+				break;
+			case KSCAN_STOP | KSCAN_QUAL_DOWN:
+				{
+					rs = gamemenu_ingame();
+					seeds_edit_open();
+
+					for(char i=0; i<18; i++)
+					{
+						char	x = seed_menu_x[i];
+						char	y = seed_menu_y[i];
+
+						if (i < numSeeds)
+						{
+							disp_put_tile(seed_info[i].plant, x, y);
+							disp_put_price(seed_info[i].cost, x, y + 4);
+							if (seedused & (1 << i))
+								disp_ghost_tile(seed_info[i].plant, x, y);
+						}
+						else if (i < 17)
+						{
+							disp_put_tile(PT_CARDSLOT, x, y);
+							disp_put_noprice(x, y + 4);							
+						}
+						else
+						{
+							disp_put_tile(PT_GO, x, y);
+							disp_put_noprice(x, y + 4);														
+						}
+
+						disp_color_price(x, y + 4);
+					}
+				}
 				break;
 		}
 
@@ -180,9 +229,8 @@ void seeds_edit_menu(SeedFlags seeds, char slots)
 		{
 			char si = my * 6 + mx;
 			if (si == 17 && menu_size == slots + 1)
-				break;
-
-			if (si < numSeeds)
+				rs = GMENU_START;
+			else if (si < numSeeds)
 			{
 				Seeds	s = seedtab[si];
 				if (seedused & (1 << si))
@@ -203,4 +251,6 @@ void seeds_edit_menu(SeedFlags seeds, char slots)
 	}
 
 	spr_show(6, false);
+
+	return rs;
 }

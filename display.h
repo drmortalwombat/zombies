@@ -15,8 +15,10 @@ static char * const Hires	=	(char *)0xe000;
 
 enum PlantType
 {
-	PT_NONE_DAY,
-	PT_NONE_NIGHT,
+	PT_NONE_DAY_0,
+	PT_NONE_DAY_1,
+	PT_NONE_NIGHT_0,
+	PT_NONE_NIGHT_1,
 
 	PT_TOMBSTONE,
 	PT_CRATER,
@@ -90,6 +92,8 @@ enum PlantType
 	PT_FREESLOT,
 	PT_GO,
 
+	PT_FENCE,
+
 	NUM_PLANT_TYPES
 };
 
@@ -107,6 +111,8 @@ void display_init(void);
 void set_cursor_sprite(char x, char y);
 
 void text_put(char x, char y, char c, const char * t);
+
+void text_put_2(char x, char y, char color1, char color2, const char * t);
 
 void disp_put_price(unsigned v, char dx, char dy);
 

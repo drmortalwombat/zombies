@@ -4,6 +4,7 @@
 #include "zombies.h"
 #include "gamemusic.h"
 #include "seeds.h"
+#include "gamemenu.h"
 
 enum LevelCommand
 {
@@ -59,7 +60,7 @@ struct Level
 extern const Level	*	GameLevels[];
 extern const Level	*	level;
 
-void level_start(char li);
+GameResponse level_start(char li);
 
 void level_iterate(void);
 

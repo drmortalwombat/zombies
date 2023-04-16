@@ -89,6 +89,12 @@ void display_init(void)
 
 	mmap_trampoline();
 
+	// Disable interrupts while setting up
+	__asm { sei };
+
+	// Kill CIA interrupts
+	cia_init();
+
 	mmap_set(MMAP_RAM);
 
 	memcpy(Hires, SpriteData, sizeof(SpriteData));
@@ -111,7 +117,7 @@ void display_init(void)
 	music_init(TUNE_GAME_6);
 	sidfx_init();
 
-	rirq_init_kernal();
+	rirq_init_io();
 
 	for(int i=0; i<5; i++)
 	{
@@ -304,6 +310,55 @@ void text_put(char x, char y, char color, const char * t)
 			text_pline(hp + 320, fp[6] | (fp[6] >> 1), 0);
 			text_pline(hp + 321, fp[6] >> 1, 0);
 
+			hp += 16;
+			cp += 2;
+		}
+
+		ci++;
+	}
+}
+
+void text_put_2(char x, char y, char color1, char color2, const char * t)
+{
+	char	*	hp = HiresTab[y] + 8 * x;
+	char	*	cp = ColorTab[y] + x;
+	char		ci = 0;
+
+	while (char c = t[ci])
+	{
+		if (c == '\n')
+		{
+			y += 2;
+			hp = HiresTab[y] + 8 * x;
+			cp = ColorTab[y] + x;
+		}
+		else
+		{
+			const char * fp = FontData + 8 * (c & 0x3f);
+			cp[0] = color1;
+			cp[1] = color1;
+			cp[40] = color2;
+			cp[41] = color2;
+
+			text_pline(hp, fp[0], 0);
+
+			char pl = 0;
+			for(char i=0; i<7; i++)
+			{
+				char l = fp[i];
+				char n = fp[i + 1];
+
+				text_pline(hp + 2 * i + 1, (pl | l) | ((pl | l) >> 1), l);
+				if (i == 3)
+					hp += 312;
+				text_pline(hp + 2 * i + 2, (l | n) | (l >> 1), l);
+				pl = l;
+			}
+
+			text_pline(hp + 15, fp[6] | (fp[6] >> 1), 0);
+			text_pline(hp + 328, fp[6] >> 1, 0);
+
+			hp -= 312;
 			hp += 16;
 			cp += 2;
 		}
