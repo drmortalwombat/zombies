@@ -9,12 +9,14 @@ char gamemenu_query(const char ** menu)
 	char	y = 8;
 	char	x = 10;
 
+	// Draw menu rows
 	while (menu[n])
 	{
 		text_put(x, y + 2 * n, n == 0 ? VCOL_YELLOW : VCOL_MED_GREY, menu[n]);
 		n++;	
 	}
 
+	// Hide all sprites
 	char spe = vic.spr_enable;
 	vic.spr_enable = 0;
 
@@ -24,6 +26,7 @@ char gamemenu_query(const char ** menu)
 	char	s = 0;
 	for(;;)
 	{
+		// Keyboard control
 		keyb_poll();
 		switch (keyb_key)
 		{
@@ -48,12 +51,14 @@ char gamemenu_query(const char ** menu)
 			case KSCAN_SPACE | KSCAN_QUAL_DOWN:
 			case KSCAN_RETURN | KSCAN_QUAL_DOWN:
 
+				// Restore sprite and return selection
 				vic.spr_enable = spe;
 
 				return s;
 				break;			
 		}
 
+		// Joystick control
 		joy_poll(0);
 		if (joydown)
 		{
@@ -62,6 +67,7 @@ char gamemenu_query(const char ** menu)
 		}
 		else if (joyb[0])
 		{
+			// Restore sprite and return selection
 			vic.spr_enable = spe;
 			return s;
 		}

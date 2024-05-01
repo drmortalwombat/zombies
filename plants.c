@@ -76,6 +76,7 @@ void plant_grid_draw(void)
 
 void plant_grid_clear(char rows)
 {
+	// Set all lawn fields to ground
 	for(char y=0; y<5; y++)
 	{
 		char	t = PT_GROUND;
@@ -89,11 +90,14 @@ void plant_grid_clear(char rows)
 
 		rows >>= 1;
 
+		// Random selection of background tile
 		for(char x=0; x<10; x++)
 		{
 			plant_grid[y][x].type = t | (m & 1);
 			m >>= 1;
 		}
+
+		// No active plant in this row
 		plant_first[y] = 0xff;
 	}
 }
@@ -101,15 +105,17 @@ void plant_grid_clear(char rows)
 void plant_place(char x, char y, PlantType p)
 {
 	__assume(x < 10);
-
 	__assume(y < 5);
+
+	// Get plant slot
 	Plant	*	pp = plant_grid[y] + x;
 
+	// Get plant info
 	PlantType	pt = pp->type;
 
+	// Init plant slot
 	pp->type = p;
 	pp->age = 0;
-
 
 	switch (p)
 	{
@@ -169,6 +175,7 @@ void plant_place(char x, char y, PlantType p)
 
 	if (pt < PT_TOMBSTONE)
 	{
+		// Add plant to list of plants in row
 		char i = plant_first[y];
 		if (i > x)
 		{
@@ -176,6 +183,7 @@ void plant_place(char x, char y, PlantType p)
 		}
 		else
 		{
+			// Find plant directly before new slot
 			char pi;
 			do 
 			{
@@ -183,6 +191,8 @@ void plant_place(char x, char y, PlantType p)
 				pi = i;
 				i = plant_grid[y][i].next;
 			} while (i < x);
+
+			// Link to previous plant
 			plant_grid[y][pi].next = x;
 		}
 
@@ -196,8 +206,10 @@ void plant_remove(char x, char y)
 {
 	__assume(x < 10);
 
+	// Restore slot to back tile
 	plant_grid[y][x].type = back_tile;
 
+	// Remove plant from list
 	char i = plant_first[y];
 	if (i == x)
 	{
@@ -205,6 +217,7 @@ void plant_remove(char x, char y)
 	}
 	else
 	{
+		// Find plant directly before new slot
 		char pi;
 		do 
 		{
@@ -212,6 +225,8 @@ void plant_remove(char x, char y)
 			pi = i;
 			i = plant_grid[y][i].next;
 		} while (i != x);
+
+		// Advance link in previous plant
 		plant_grid[y][pi].next = plant_grid[y][x].next;
 	}
 }
@@ -219,33 +234,6 @@ void plant_remove(char x, char y)
 void menu_draw(char x, char t)
 {
 	disp_put_tile(t, 4 * x, 0);
-#if 0
-	char * hdp = Hires + 32 * x;
-	const char * sdp = PlantsHiresData + 8 * 16 * t;
-
-	for(char i=0; i<4; i++)
-	{
-		for(signed char j=31; j>=0; j--)
-			hdp[j] = sdp[j];
-		hdp += 320;
-		sdp += 8 * 4;
-	}
-
-	char * cdp = Color + 4 * x;
-	hdp = Screen + 4 * x;
-
-	for(char i=0; i<4; i++)
-	{
-		#pragma unroll(full)
-		for(char j=0; j<4; j++)
-		{
-			cdp[j] = PlantsColor0Data[16 * t + 4 * i + j];
-			hdp[j] = plant_color_map(PlantsColor1Data[16 * t + 4 * i + j]);
-		}
-		cdp += 40;
-		hdp += 40;
-	}
-#endif	
 }
 
 const char color_grey[16] = {
@@ -281,23 +269,6 @@ void menu_cooldown(char x)
 		menu[x].cool = 0xff;
 
 		disp_ghost_tile(menu[x].type, 4 * x, 0);
-#if 0
-		char * cdp = Color + 4 * x;
-		char * hdp = Screen + 4 * x;
-
-		for(char i=0; i<4; i++)
-		{
-			#pragma unroll(full)
-			for(char j=0; j<4; j++)
-			{
-				cdp[j] = color_grey[PlantsColor0Data[16 * t + 4 * i + j] & 0x0f];
-				char c = plant_color_map(PlantsColor1Data[16 * t + 4 * i + j]);
-				hdp[j] = color_grey[c & 0x0f] | (color_grey[c >> 4] << 4);
-			}
-			cdp += 40;
-			hdp += 40;
-		}	
-#endif
 	}
 }
 
@@ -382,6 +353,7 @@ void menu_remove_item(PlantType type)
 		x++;
 	if (x < menu_size)
 	{
+		// Move all other menu items to the left
 		menu_size--;
 		while (x < menu_size)
 		{
@@ -397,6 +369,8 @@ void menu_remove_item(PlantType type)
 			disp_put_price(menu[x].price, 4 * x, 4);
 			x++;			
 		}
+
+		// Clear new empty slot
 		menu_draw(x, PT_CARDSLOT);
 		disp_put_noprice(4 * x, 4);
 	}
@@ -404,8 +378,10 @@ void menu_remove_item(PlantType type)
 
 void menu_warmup(void)
 {
+	// Loop over all menu items
 	for(char i=menu_first; i<menu_size; i++)
 	{
+		// Not yet ready?
 		if (menu[i].cool)
 		{
 			if (menu[i].cool > menu[i].warm)
@@ -436,6 +412,7 @@ void sun_advance(void)
 {
 	if (sun_active)
 	{
+		// Move sun sprites
 		if (sun_vy < 0)
 			sun_vx -= (sun_x - 32) >> 3;
 		sun_vy -= (sun_y - 50) >> 3;
@@ -443,6 +420,7 @@ void sun_advance(void)
 		sun_y += sun_vy >> 4;
 		if (sun_y < 50 || sun_x < 0)
 		{
+			// Reached target, add sunlight to money box
 			sun_active = false;
 			spr_show(7, false);
 			menu[0].price += sun_power;
@@ -518,11 +496,13 @@ void plant_clear_mower(char y)
 
 void plant_draw_borders(void)
 {
+	// Left and right borders
 	for(char y=0; y<5; y++)
 	{
 		char * hdp = Hires + 5 * 320 + 320 * 4 * y;
 		const char * sdp = PlantsHiresData + 8 * 16 * PT_FLOORSPACE_MOWER;
 
+		// Bitmap data
 		for(char i=0; i<4; i++)
 		{
 			for(char j=0; j<8*2; j++)
@@ -533,6 +513,7 @@ void plant_draw_borders(void)
 			sdp += 8 * 4;
 		}
 
+		// Color data
 		char * cdp = Color + 5 * 40  + 40 * 4 * y;
 		hdp = Screen + 5 * 40 + 40 * 4 * y;
 
@@ -551,6 +532,7 @@ void plant_draw_borders(void)
 		}
 	}
 
+	// Status row under menu
 	char * hdp = Hires + 4 * 320;
 	for(char i=0; i<40; i++)
 	{
@@ -565,49 +547,7 @@ void plant_draw_borders(void)
 
 void plant_draw(char x, char y)
 {
-#if 1
 	disp_put_tile(plant_grid[y][x].type, 4 * x + 2, 4 * y + 5);
-#else
-	__assume(x < 10);
-
-	PlantType	p = plant_grid[y][x].type;
-
-	char * hdp = HiresTab[5 + 4 * y] + HiresOffset[x];
-
-//	Hires + 16 + 5 * 320 + 32 * x + 320 * 4 * y;
-	const char * sdp = PlantsHiresData + 8 * 16 * p;
-
-	for(char i=0; i<4; i++)
-	{
-		for(char j=0; j<8*4; j++)
-			hdp[j] = sdp[j];
-		hdp += 320;
-		sdp += 8 * 4;
-	}
-
-	char * cdp = ColorTab[5 + 4 * y] + 2 + 4 * x;
-	hdp = ScreenTab[5 + 4 * y] + 2 + 4 * x;
-
-//	char * cdp = Color + 2 + 5 * 40 + 4 * x + 40 * 4 * y;
-//	hdp = Screen + 2 + 5 * 40 + 4 * x + 40 * 4 * y;
-
-	const char * scdp = PlantsColor0Data + 16 * p;
-	const char * shdp = PlantsColor1Data + 16 * p;
-
-	for(char i=0; i<4; i++)
-	{
-		for(char j=0; j<4; j++)
-		{
-			cdp[j] = scdp[j];
-			hdp[j] = plant_color_map(shdp[j]);
-		}
-		scdp += 4;
-		shdp += 4;
-		
-		cdp += 40;
-		hdp += 40;
-	}
-#endif
 }
 
 
@@ -629,7 +569,10 @@ void plant_draw_field(char x, char y)
 
 void shots_init(void)
 {
+	// Clear list of active shots
 	shots_first = 0xff;
+
+	// Init free list of shots
 	for(char i=0; i<31; i++)
 		shots[i].next = i + 1;
 	shots[31].next = 0xff;
@@ -642,6 +585,9 @@ void shot_draw(char x, char y, char c)
 
 	char * dp = HiresTab[y + 5] + (x & 0xfc) * 2 + 16 + 2;
 	char * cp = ColorTab[y + 5] + (x >> 2) + 2;
+
+	// Four versions of drawing a shot depending of pixel
+	// position
 
 	switch(x & 3)
 	{
@@ -684,6 +630,7 @@ void shot_draw(char x, char y, char c)
 
 void shot_clear(char x, char y)
 {
+	// Redraw plant character
 	plant_draw_field(x >> 2, y);
 	if (x & 3)
 		plant_draw_field((x >> 2) + 1, y);
@@ -691,17 +638,24 @@ void shot_clear(char x, char y)
 
 void shots_add(char x, char y, char t, ShotType type)
 {
+	// Check for entry in free show list
 	if (shots_free != 0xff && x < 148)
 	{
+		// Remaining time of flight
 		if (x + t > 148)
 			t = 148 - x;
 
+		// Remove from free list
 		char	s = shots_free;
 		shots_free = shots[s].next;
+
+		// Init node
 		shots[s].x = x;
 		shots[s].y = y;
 		shots[s].t = t;
 		shots[s].type = type;
+
+		// Add to active list
 		shots[s].next = shots_first;
 		shots_first = s;
 	}
@@ -711,32 +665,42 @@ const char shot_colors[4] = {VCOL_YELLOW, VCOL_LT_BLUE, VCOL_PURPLE, VCOL_MED_GR
 
 void shots_advance(char step)
 {
+	// Loop over all shots in active list, keep index
+	// of predecessor for quick removal from list
+
 	char	p = 0xff;
 	char	s = shots_first;
+
+
 	while (s != 0xff)
 	{
+		// Restore bitmap
 		shot_clear(shots[s].x, shots[s].y);
 
+		// Advance shot
 		char sstep = step;
 		if (shots[s].type == ST_FUME)
 			sstep <<= 2;
 
 		char n = shots[s].next;
 		shots[s].x += sstep;
+
+		// Tile position
 		char y = shots[s].y >> 2;
 		char x = shots[s].x + 20;
 
 		bool	keep = true;
-
 
 		if (shots[s].t < sstep)
 			keep = false;
 		else
 		{
 			shots[s].t -= sstep;
+
+			// Check for zombie collision
 			if (zombies_left[y] <= x && shots[s].type != ST_FUME)
 			{
-
+				// Loop over potential collisions
 				char z = zombies_first[y];
 				while (z != 0xff)
 				{
@@ -747,10 +711,13 @@ void shots_advance(char step)
 						zombies[z].live -= 2;
 						zombies[z].frozen |= 0x80;
 
+						// Remove this shot, and quick exit from check
 						keep = false;
 						sidfx_play(2, SIDFXZombieHit, 1);
 						break;
 					}
+
+					// Next zombie
 					z = zombies[z].next;
 				}
 			}
@@ -758,11 +725,15 @@ void shots_advance(char step)
 
 		if (keep)
 		{
+			// Draw the shot
 			shot_draw(shots[s].x, shots[s].y, shot_colors[shots[s].type]);
+
+			// This is now the new previous shot
 			p = s;
 		}
 		else
 		{
+			// Remove from list
 			if (p == 0xff)
 				shots_first = n;
 			else
@@ -770,14 +741,18 @@ void shots_advance(char step)
 			shots[s].next = shots_free;
 			shots_free = s;
 		}
+
+		// Advance in list
 		s = n;
 	}
 }
 
 bool plant_scared_row(char x, char y)
 {
+	// Is there any zombie nearby in this row?
 	if (zombies_left[y] < x + 48 && zombies_right[y] + 8 >= x)
 	{
+		// Check for actual zombies
 		char s = zombies_first[y];
 		while (s != 0xff)
 		{
@@ -792,6 +767,7 @@ bool plant_scared_row(char x, char y)
 
 bool plant_scared(char x, char y)
 {
+	// Check for nearby zombies
 	x *= 16;
 
 	return 
@@ -802,8 +778,12 @@ bool plant_scared(char x, char y)
 
 void plants_iterate(char y)
 {
+	// Loop over all plants in this row, keep the index to the
+	// previous plant for quick list removal
 	char ps = 0xff;
 	char s = plant_first[y];
+
+	// Position of left and rightmost zombie in row
 	char right = zombies_right[y] >> 4;
 	char left = zombies_left[y] >> 4;
 
@@ -854,6 +834,7 @@ void plants_iterate(char y)
 				case PT_PUFFSHROOM_1:
 					if (s < right && s + 3 >= left)
 					{
+						// Short lived shot
 						p->cool = 7 + (r & 3);
 						shots_add(16 * s + 12, 4 * y + 2, 36, ST_PUFF);
 					}
@@ -863,6 +844,7 @@ void plants_iterate(char y)
 				case PT_FUMESHROOM_1:
 					if (s < right && s + 4 >= left)
 					{
+						// Add many small shots as fume
 						p->cool = 7 + (r & 3);
 						shots_add(16 * s + 12, 4 * y + 1, 48, ST_FUME);
 						shots_add(16 * s + 22, 4 * y + 1, 32, ST_FUME);
@@ -882,9 +864,11 @@ void plants_iterate(char y)
 				case PT_EXPLOSION_3:
 				case PT_POTATOMINE_EXPLODED:
 				case PT_SNOWFLAKE:
+					// End of single use animation, remove from lawn
 					p->type = back_tile;
 					plant_draw(s, y);
 
+					// Remove from list
 					if (ps != 0xff)
 						plant_grid[y][ps].next = n;
 					else
@@ -926,6 +910,7 @@ void plants_iterate(char y)
 				case PT_SUNSHROOM_BIG_1:
 					if (!sun_active)
 					{
+						// Generate sun light
 						p->cool = 64 + (r & 63);
 						sun_add(s, 50 + 8 * 5 + 32 * y, 0, 25);					
 					}
@@ -935,8 +920,11 @@ void plants_iterate(char y)
 				case PT_SUNSHROOM_1:
 					if (!sun_active)
 					{
+						// Generate sun light
 						p->cool = 64 + (r & 63);
-						sun_add(s, 50 + 8 * 5 + 32 * y, 0, 15);					
+						sun_add(s, 50 + 8 * 5 + 32 * y, 0, 15);	
+
+						// Check if grown to large sun shroom				
 						p->age++;
 						if (p->age == 4)
 						{
@@ -948,6 +936,7 @@ void plants_iterate(char y)
 
 				case PT_CHOMPER_EAT_0:
 				case PT_CHOMPER_EAT_1:
+					// Back to normal chomper
 					p->type = PT_CHOMPER_0;
 					plant_draw(s, y);
 					break;
@@ -964,6 +953,7 @@ void plants_iterate(char y)
 					p->cool = 2;
 					plant_draw(s, y);
 					{
+						// Destroy many zombies
 						char sy = 0, ey = 5;
 						if (y > 2)
 							sy = y -2;
@@ -976,11 +966,14 @@ void plants_iterate(char y)
 					break;
 
 				case PT_CHERRYBOMB:
+					// Destroy nearby zombies
 					zombies_splash(s * 16 + 28, y, 16, 80);
 					if (y > 0)
 						zombies_splash(s * 16 + 28, y - 1, 16, 80);
 					if (y < 4)
 						zombies_splash(s * 16 + 28, y + 1, 16, 80);
+
+					// Start explosion animation
 					p->type = PT_EXPLOSION_0;
 					plant_draw(s, y);
 					sidfx_play(2, SIDFXExplosion, 1);					
@@ -1000,6 +993,7 @@ void plants_iterate(char y)
 
 				case PT_SCAREDYSHROOM_0:
 				case PT_SCAREDYSHROOM_1:
+					// Check if scared
 					if (plant_scared(s, y))
 					{
 						p->type = PT_SCAREDYSHROOM_DUCK;
@@ -1031,7 +1025,7 @@ void plants_iterate(char y)
 	}
 }
 
-PlantType	plant_anim_tab[NUM_PLANT_TYPES] = {
+const PlantType	plant_anim_tab[NUM_PLANT_TYPES] = {
 	[PT_SUNFLOWER_0] = PT_SUNFLOWER_1,
 	[PT_SUNFLOWER_1] = PT_SUNFLOWER_0,
 
@@ -1075,13 +1069,16 @@ PlantType	plant_anim_tab[NUM_PLANT_TYPES] = {
 
 void plants_animate(char y)
 {
+	// Pick a random slot in the row to animate
 	unsigned	r = rand();
 	char		x = ((r & 0xff) * 9) >> 8;
 
+	// Check if there is anything to animate in this slot
 	Plant	*	p = plant_grid[y] + x;
 	PlantType	t = plant_anim_tab[p->type];
 	if (t)
 	{
+		// Apply animation
 		p->type = t;
 		plant_draw(x, y);
 		return;

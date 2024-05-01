@@ -6,6 +6,9 @@
 #include "seeds.h"
 #include "gamemenu.h"
 
+// A level zombie sequence is defined by a list of commands
+// each commands has a delay in the upper four bits and a
+// type of zombie in the lower four bits
 enum LevelCommand
 {
 	LVC_DELAY_10F = 0x00,
@@ -45,25 +48,29 @@ enum LevelFlags
 	LF_GENERATED	=	0x0010
 };
 
+// Level specification
 struct Level
 {
 	const char *			name;
 	char					rows, flags, graves, slots;
 	unsigned				sun;
-	unsigned				seeds;
-	const LevelCommand	*	cmds;
+	unsigned				seeds;	// Flags of available seeds
+	const LevelCommand	*	cmds;	// List of zombie commands
 	Tune					tune;
-	PlantType				tutorialPlant;
-	const char *			tutorialText;
+	PlantType				tutorialPlant;	// New plant to show at beginning
+	const char *			tutorialText;	// Tutorial text for plant
 };
 
 extern const Level	*	GameLevels[];
 extern const Level	*	level;
 
+// Start the level with index li
 GameResponse level_start(char li);
 
+// Iterate the level on each frame
 void level_iterate(void);
 
+// Check if the level is complete
 bool level_complete(void);
 
 #pragma compile("levels.c")

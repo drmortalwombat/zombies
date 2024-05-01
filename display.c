@@ -70,6 +70,7 @@ __striped char * const ScreenTab[25] = {
 
 __zeropage	char		back_color;
 
+// Interrupt for music
 __interrupt void music_irq(void)
 {
 //	vic.color_border++;
@@ -77,7 +78,7 @@ __interrupt void music_irq(void)
 //	vic.color_border--;
 }
 
-
+// Interrupt for sound effects
 __interrupt void sidfx_irq(void)
 {
 	sidfx_loop_2();
@@ -87,6 +88,7 @@ void display_init(void)
 {
 	mmap_set(MMAP_NO_BASIC);
 
+	// Install trampoline
 	mmap_trampoline();
 
 	// Disable interrupts while setting up
@@ -95,13 +97,18 @@ void display_init(void)
 	// Kill CIA interrupts
 	cia_init();
 
+	// All RAM
 	mmap_set(MMAP_RAM);
 
+	// Copy sprite data into hires to avoid overlap when
+	// decompressing, then decompress
 	memcpy(Hires, SpriteData, sizeof(SpriteData));
 	oscar_expand_lzo(Sprites, Hires);
 
+	// RAM and IO
 	mmap_set(MMAP_NO_ROM);
 
+	// Init screen pointers
 	vic_setmode(VICM_HIRES_MC, Screen, Hires);
 
 	vic.color_border = VCOL_BLACK;
@@ -111,20 +118,25 @@ void display_init(void)
 	vic.spr_mcolor0 = VCOL_BLACK;
 	vic.spr_mcolor1 = VCOL_WHITE;
 
+	// Clear screen
 	memset(Screen, 0, 1000);
 	memset(Color, 0, 1000);
 
 	music_init(TUNE_GAME_6);
 	sidfx_init();
 
+	// Init raster IRQ system for no ROM memory map
 	rirq_init_io();
 
+	// Initialize the five row IRQs for the zombies
 	for(int i=0; i<5; i++)
 	{
+		// Music IRQ in first and fourth row
 		bool	music = (i == 0) || (i == 3);
 
 		RIRQCode	*	zm = rirq_alloc(ZOMBIE_SPRITES * 4 + 1 + music);
 
+		// Init zombie sprite multiplexer for the row
 		zombieMux[i] = zm;
 		for(int j=0; j<ZOMBIE_SPRITES; j++)
 		{
@@ -134,12 +146,16 @@ void display_init(void)
 			rirq_write(zm, 3 * ZOMBIE_SPRITES + j, &(vic.spr_color[j]), VCOL_MED_GREY);
 		}
 		rirq_write(zm, 4 * ZOMBIE_SPRITES, &vic.spr_msbx, 0);
+
+		// Add music IRQ if required
 		if (music)
 			rirq_call(zm, 4 * ZOMBIE_SPRITES + 1, music_irq);
 
+		// Place raster IRQ
 		rirq_set(i, 50 + 5 * 8 + 4 * 8 * i, zm);
 	}
 
+	// IRQ for menu and sound effects on top of screen
 	rirq_build(&menuMux, 5);
 	rirq_write(&menuMux, 0, &(vic.spr_pos[6].y), 50 - 10);
 	rirq_write(&menuMux, 1, &(vic.spr_pos[6].x), 24);
@@ -148,6 +164,7 @@ void display_init(void)
 	rirq_call(&menuMux, 4, sidfx_irq);
 	rirq_set(6, 10, &menuMux);
 
+	// IRQ for cursor sprite at bottom of menu
 	rirq_build(&cursorMux, 4);
 	rirq_write(&cursorMux, 0, &(vic.spr_pos[6].y), 50 - 10);
 	rirq_write(&cursorMux, 1, &(vic.spr_pos[6].x), 24);
@@ -155,6 +172,7 @@ void display_init(void)
 	rirq_write(&cursorMux, 3, Screen + 0x3f8 + 6, 16 + 108);
 	rirq_set(7, 50 + 32, &cursorMux);
 
+	// Start IRQs
 	rirq_sort();
 
 	rirq_start();
@@ -165,6 +183,7 @@ void display_init(void)
 
 void disp_color_price(char dx, char dy)
 {
+	// Draw price in grey
 	char * cdp = ScreenTab[dy] + dx;
 	for(char i=0; i<4; i++)
 		cdp[i] = VCOL_LT_GREY | (VCOL_DARK_GREY << 4);
@@ -174,6 +193,7 @@ void disp_put_price(unsigned v, char dx, char dy)
 {
 	char	c[4], c0 = 10;
 
+	// Convert price to digits
 	if (v >= 1000)
 	{
 		char	p = 0;
@@ -220,6 +240,7 @@ void disp_put_price(unsigned v, char dx, char dy)
 
 	char * hdp = HiresTab[dy] + 8 * dx;
 
+	// Draw digits into hires bitmap
 	for(char i=0; i<4; i++)
 	{
 		const char * sdp = DigitsHiresData + 8 * c[i];
@@ -237,6 +258,7 @@ void disp_put_noprice(char dx, char dy)
 
 	const char * sdp = DigitsHiresData + 80;
 
+	// Clear digit hires bitmap
 	for(char i=0; i<4; i++)
 	{
 		for(char j=0; j<8; j++)
@@ -246,12 +268,13 @@ void disp_put_noprice(char dx, char dy)
 
 }
 
-
+// Character expand for outline and shadow effect
 static const char cexpand[16] = {
 	0x00, 0x03, 0x0c, 0x0f, 0x30, 0x33, 0x3c, 0x3f,
 	0xc0, 0xc3, 0xcc, 0xcf, 0xf0, 0xf3, 0xfc, 0xff
 };
 
+// Draw character with outline and shadow
 void text_pline(char * hp, char m, char l)
 {
 	char t0 = hp[0];
@@ -277,12 +300,15 @@ void text_pline(char * hp, char m, char l)
 
 void text_put(char x, char y, char color, const char * t)
 {
+	// Target position
 	char	*	hp = HiresTab[y] + 8 * x;
 	char	*	cp = ColorTab[y] + x;
 	char		ci = 0;
 
+	// Loop over characters in string
 	while (char c = t[ci])
 	{
+		// Line break
 		if (c == '\n')
 		{
 			y += 2;
@@ -291,12 +317,15 @@ void text_put(char x, char y, char color, const char * t)
 		}
 		else
 		{
+			// Get font data
 			const char * fp = FontData + 8 * (c & 0x3f);
 			cp[0] = color;
 			cp[1] = color;
 
+			// Expand first pixel outline
 			text_pline(hp, fp[0], 0);
 
+			// Expand main character lines
 			char pl = 0;
 			for(char i=0; i<7; i++)
 			{
@@ -307,9 +336,11 @@ void text_put(char x, char y, char color, const char * t)
 				pl = l;
 			}
 
+			// Expand bottom lines and shadow
 			text_pline(hp + 320, fp[6] | (fp[6] >> 1), 0);
 			text_pline(hp + 321, fp[6] >> 1, 0);
 
+			// Next character
 			hp += 16;
 			cp += 2;
 		}
@@ -367,6 +398,7 @@ void text_put_2(char x, char y, char color1, char color2, const char * t)
 	}
 }
 
+// Map to day and night background color
 static inline char plant_color_map(char c)
 {
 	return ((c & 0xf0) == (VCOL_PURPLE << 4)) ? (c & 0x0f) | back_color : c;
@@ -379,12 +411,15 @@ void disp_put_char(PlantType type, char sx, char sy, char dx, char dy)
 	__assume(sx < 4);
 	__assume(sy < 4);
 
+	// Display position
 	char * hdp = HiresTab[dy] + 8 * dx;
 	const char * sdp = PlantsHiresData + 8 * 16 * type + 8 * sx + 32 * sy;
 
+	// Bitmap data
 	for(char j=0; j<8; j++)
 		hdp[j] = sdp[j];
 
+	// Color data
 	char * cdp = ColorTab[dy];
 	hdp = ScreenTab[dy];
 
@@ -400,9 +435,11 @@ void disp_put_tile(PlantType type, char dx, char dy)
 	__assume(dx < 36);
 	__assume(dy < 21);
 
+	// Display position
 	char * hdp = HiresTab[dy] + 8 * dx;
 	const char * sdp = PlantsHiresData + 8 * 16 * type;
 
+	// Bitmap data
 	for(char i=0; i<4; i++)
 	{
 		for(signed char j=31; j>=0; j--)
@@ -414,6 +451,7 @@ void disp_put_tile(PlantType type, char dx, char dy)
 	char * cdp = ColorTab[dy] + dx;
 	hdp = ScreenTab[dy] + dx;
 
+	// Color data
 	const char * scdp = PlantsColor0Data + 16 * type;
 	const char * shdp = PlantsColor1Data + 16 * type;
 

@@ -4,6 +4,7 @@
 #include "plants.h"
 #include "gamemenu.h"
 
+// Type of seed packages/plants available
 enum Seeds
 {
 	SD_PEASHOOTER,
@@ -26,6 +27,7 @@ enum Seeds
 	SD_DOOMSHROOM
 };
 
+// Flags limiting available seeds
 enum SeedFlags
 {
 	SF_PEASHOOTER		=	1u << SD_PEASHOOTER,
@@ -48,16 +50,19 @@ enum SeedFlags
 	SF_DOOMSHROOM		=	1u << SD_DOOMSHROOM
 };
 
+// Parameters for a type of seed
 struct SeedInfo
 {
-	PlantType	plant;
-	unsigned	cost;
-	char		warm;
-	bool		ready;
+	PlantType	plant;		// Type of plant grown from this seed
+	unsigned	cost;		// Cost in sunlight
+	char		warm;		// Time to reactivate seed after use
+	bool		ready;		// Seed starts ready
 };
 
+// Seed info for the different types of seed packages
 extern const SeedInfo seed_info[16];
 
+// Edit initial seed selection
 GameResponse seeds_edit_menu(SeedFlags seeds, char slots);
 
 #pragma compile("seeds.c")

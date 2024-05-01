@@ -1,3 +1,3 @@
-..\oscar64\release\oscar64 -n main.c -o=zombies.prg
+oscar64 -n main.c -o=zombies.prg -xz -Oz -g -O2
 
 

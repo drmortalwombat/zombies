@@ -26,6 +26,7 @@ unsigned	sun_count;
 
 void cursor_show(char x, char y)
 {
+	// Set cursor sprite
 	cursorX = x;
 	cursorY = y;
 	spr_set(6, true, 24 + x * 32, 50 + 8 * 5 + y * 32, 16 + 108, VCOL_WHITE, false, true, true);
@@ -34,10 +35,12 @@ void cursor_show(char x, char y)
 
 void cursor_move(signed char dx, signed char dy)
 {
+	// Move cursor sprite by given offset, negative position is menu
 	cursorX += dx;
 	cursorY += dy;
 	if (cursorY < 0)
 	{
+		// Move in menu
 		cursorY = -1;
 		if (cursorX < menu_first)
 			cursorX = 1;
@@ -47,6 +50,7 @@ void cursor_move(signed char dx, signed char dy)
 	}
 	else
 	{
+		// Move in lawn
 		if (cursorY > 4)
 			cursorY = 4;
 		if (cursorX < 0)
@@ -58,6 +62,7 @@ void cursor_move(signed char dx, signed char dy)
 	
 	if (cursorY < 0)
 	{
+		// Set in menu multiplexer
 		unsigned	x = 24 + cursorX * 32;
 		rirq_data(&menuMux, 1, x);
 		rirq_data(&menuMux, 2, (x & 0x100) != 0 ? 0x40 : 0x00);
@@ -65,6 +70,7 @@ void cursor_move(signed char dx, signed char dy)
 	}
 	else
 	{
+		// Set in zombie row multiplexer
 		char		y = 50 + 8 * 5 + cursorY * 32;
 		unsigned	x = 40 + cursorX * 32;
 
@@ -76,6 +82,7 @@ void cursor_move(signed char dx, signed char dy)
 	}
 }
 
+// Move menu marker
 void menu_move(signed char dx)
 {
 	if (dx < 0 && menuX > menu_first)
@@ -90,6 +97,7 @@ void menu_move(signed char dx)
 	rirq_data(&menuMux, 2, (x & 0x100) != 0 ? 0x40 : 0x00);
 }
 
+// Set menu marker
 void menu_set(char m)
 {
 	if (m >= menu_first && m < menu_size)
@@ -110,6 +118,7 @@ void cursor_select(void)
 			case PT_SHOVEL:
 				if (menu[menuX].cool == 0 && plant_grid[cursorY][cursorX].type > PT_GROUND)
 				{
+					// Remove plant from soil
 					plant_remove(cursorX, cursorY);
 					plant_draw(cursorX, cursorY);						
 				}
@@ -119,6 +128,7 @@ void cursor_select(void)
 
 				if (menu[menuX].cool == 0 && menu[menuX].price <= menu[0].price && plant_grid[cursorY][cursorX].type == PT_TOMBSTONE)
 				{
+					// Replace tombstone with gravedigger
 					menu[0].price -= menu[menuX].price;
 					disp_put_price(menu[0].price, 0, 4);
 					plant_place(cursorX, cursorY, menu[menuX].type);
@@ -135,6 +145,7 @@ void cursor_select(void)
 				{
 					if (menu[menuX].cool == 0 && menu[menuX].price <= menu[0].price)
 					{
+						// Place plant
 						menu[0].price -= menu[menuX].price;
 						disp_put_price(menu[0].price, 0, 4);
 						plant_place(cursorX, cursorY, menu[menuX].type);
@@ -159,10 +170,14 @@ GameResponse game_level_loop(void)
 	
 	for(;;)
 	{
+		// Interrupt counter
 		char sirq = rirq_count;
 
 		for(char i=0; i<step; i++)
 		{
+			// Advance zombies in each row every 5th odd frame, iterate
+			// plants every even frame
+
 			if (row & 1)
 			{
 				if (zombies_advance(row >> 1))
@@ -174,6 +189,7 @@ GameResponse game_level_loop(void)
 			row++;
 			if (row == 10)
 			{
+				// Iterate level every 10th frame
 				row = 0;
 				level_iterate();
 				if (level_complete() && zombies_done())
@@ -186,6 +202,7 @@ GameResponse game_level_loop(void)
 
 		}
 
+		// Warmup menu every half second
 		warm += step;
 		if (warm >= 25)
 		{
@@ -193,8 +210,10 @@ GameResponse game_level_loop(void)
 			menu_warmup();
 		}
 
+		// Advance shots every frame
 		shots_advance(step);
 
+		// Advance mower or sun every frame
 		if (!mower_advance())
 			sun_advance();
 
@@ -209,6 +228,7 @@ GameResponse game_level_loop(void)
 			}
 		}
 
+		// Check keyboard input
 		keyb_poll();
 		switch (keyb_key)
 		{
@@ -279,6 +299,7 @@ GameResponse game_level_loop(void)
 				break;
 		}
 
+		// Check joystick input
 		joy_poll(0);
 		if (joydown)
 		{
@@ -306,17 +327,21 @@ GameResponse game_level_loop(void)
 			joymove = 20;
 		}
 
+		// Still in same frame?
 		if (sirq == rirq_count)
 		{
+			// Then animate the screen with the free time
 			if (row >= 5)
 				plants_animate(row - 5);
 			else
 				plants_animate(row);
 		}
 
+		// Wait for end of frame
 		while (sirq == rirq_count)
 			;
 
+		// Remember the number of frames passed
 		step = rirq_count - sirq;
 	}
 }
@@ -344,6 +369,8 @@ void game_loop(char li)
 		{
 			text_put(12, 10, VCOL_ORANGE, level->name);
 
+			// Display count down
+
 			text_put(11, 14, VCOL_ORANGE, P"READY...");
 			for(int i=0; i<40; i++)
 				vic_waitFrame();
@@ -364,6 +391,8 @@ void game_loop(char li)
 			cursor_show(0, 2);
 			cursor_move(0, 0);
 
+			// Execute game
+
 			music_patch_voice3(false);
 			gr = game_level_loop();
 			music_patch_voice3(true);
@@ -372,6 +401,7 @@ void game_loop(char li)
 			spr_show(7, false);
 		}
 
+		// Display result
 		switch (gr)
 		{
 		case GMENU_FAILED:
@@ -416,6 +446,7 @@ int main(void)
 		mower_init();
 		plant_grid_clear(0b11111);
 
+		// Draw intro screen
 		plant_grid[0][3].type = PT_SUNFLOWER_0;
 		plant_grid[0][0].type = PT_SUNFLOWER_1;
 		plant_grid[1][1].type = PT_SUNFLOWER_1;
@@ -439,6 +470,7 @@ int main(void)
 		text_put( 18, 2, VCOL_WHITE, P"VS");
 		text_put_2( 23, 1, VCOL_LT_GREY, VCOL_MED_GREY, P"UNDEAD");
 
+		// Intro text
 		text_put( 5, 18, VCOL_LT_BLUE, P"C64 CONVERSION");
 		text_put( 4, 19, VCOL_LT_GREY, P"DR.MORTAL WOMBAT");
 		text_put( 15, 21, VCOL_LT_BLUE, P"MUSIC");
@@ -450,9 +482,8 @@ int main(void)
 
 		char	ls = gamemenu_query(level_menu);
 
-
+		// Select starting level
 		char li = 0;
-
 		switch (ls)
 		{
 		case 0:

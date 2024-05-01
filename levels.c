@@ -1392,6 +1392,7 @@ Level	LevelNightmare = {
 
 static unsigned level_seed;
 
+// Pseudo random generator for deterministic level sequence
 unsigned int level_rand(void)
 {
     level_seed ^= level_seed << 7;
@@ -1400,6 +1401,8 @@ unsigned int level_rand(void)
 	return level_seed;
 }
 
+// Get a random level command from the shuffle array, and
+// place the command at the end
 static LevelCommand randzombie(void)
 {
 	char	k = level_rand() & 31;
@@ -1431,6 +1434,7 @@ GameResponse level_start(char li)
 {
 	GameResponse 	gs = GMENU_START;
 
+	// Init level state
 	level_cmd = 0;
 	level_delay = 0;
 	level_conveyor = 0;
@@ -1439,10 +1443,13 @@ GameResponse level_start(char li)
 	level_phase = 0;
 	level_brains = 0;
 
+	// Check for fixed / random level
 	if (li >= 18)
 	{
+		// A random level
 		level_index = li - 18;
 
+		// Generate name/index
 		level = &LevelNightmare;
 		NighmareText[10] = (level_index + 1) / 10 + '0';
 		NighmareText[11] = (level_index + 1) % 10 + '0';
@@ -1454,6 +1461,7 @@ GameResponse level_start(char li)
 		LevelNightmare.graves = 7 + level_index;
 		LevelNightmare.tune = level_tunes[level_index & 7];
 
+		// Init shuffle array
 		char	t = 0;
 		for(char i=0; i<8; i++)
 		{
@@ -1461,18 +1469,22 @@ GameResponse level_start(char li)
 				zshuffle[t++] = i;
 		}		
 
+		// Randomize shuffle array
 		for(char i=0; i<64; i++)
 			randzombie();
 	}
 	else
 	{
+		// A fixed level
 		level = GameLevels[li];
 
+		// Count number of commands
 		while (level->cmds[level_size] != LVC_END)
 			level_size++;
 	}
 
 
+	// Build level rows shuffle array
 	char row = 0;
 	for(char i=0; i<32; i++)
 	{		
@@ -1487,6 +1499,7 @@ GameResponse level_start(char li)
 		level_rows[i] = row;
 	}
 
+	// Check color of day/night levels
 	if (level->flags & LF_NIGHT)
 	{
 		back_color = VCOL_PURPLE << 4;
@@ -1498,17 +1511,22 @@ GameResponse level_start(char li)
 		back_tile = PT_NONE_DAY_0;
 	}
 
+	// Draw left and right borders
 	plant_draw_borders();
 
+	// Draw conveyor or slots
 	if (level->flags & LF_CONVEYOR)
 		menu_init(10);
 	else
 		menu_init(level->slots + 1);
 
+	// Draw lawn mowers
 	mower_init();
 
+	// Reset lawn to grass
 	plant_grid_clear(level->rows);
 
+	// Place pseudo random places graves
 	for(char i=0; i<level->graves; i++)
 	{
 		char x, y;
@@ -1520,9 +1538,10 @@ GameResponse level_start(char li)
 		plant_place(x, y, PT_TOMBSTONE);
 	}
 
+	// Draw lawn
 	plant_grid_draw();
 
-
+	// Check for tutorial plant
 	if (level->tutorialPlant != PT_NONE_DAY_0)
 	{
 		if (level->flags & LF_FIXSEED)
@@ -1532,12 +1551,15 @@ GameResponse level_start(char li)
 		
 		music_active = true;
 
+		// Draw tutorial plant and info text
 		disp_put_tile(level->tutorialPlant, 18, 13);
 		text_put(2, 18, VCOL_YELLOW, level->tutorialText);
 
+		// Wait for four seconds
 		for(int i=0; i<200; i++)
 			vic_waitFrame();
 
+		// Restore lawn
 		plant_row_draw(2);
 		plant_row_draw(3);
 		plant_row_draw(4);
@@ -1550,8 +1572,10 @@ GameResponse level_start(char li)
 		music_active = true;		
 	}
 
+	// Reset progress bar on menu
 	menu_progress(0, level_size);
 
+	// Init menu list at top
 	unsigned	seeds = level->seeds;
 	if (level->flags & LF_CONVEYOR)
 	{
@@ -1563,6 +1587,7 @@ GameResponse level_start(char li)
 	}
 	else
 	{
+		// Put sun
 		menu_add_item(PT_SUN, level->sun, 0, true, false);
 		if (level->flags & LF_FIXSEED)
 		{
@@ -1602,32 +1627,44 @@ LevelCommand level_next_command(void)
 {
 	if (level->flags & LF_GENERATED)
 	{
+		// Generated level, fixed number of commands
 		if (level_cmd == level_size)
 			return LVC_END;
+
+		// Each type of zombie costs some amount of brain, if all brain
+		// is consumed, the command counter increments
 
 		char	di;
 		if (level_brains == 0)
 		{
+			// Calculate a new amount of brain after a random delay, longer
+			// delay or higher level yields more brain
 			do 	{
 				di = (level_rand() & 3) + 6;
 				level_brains = ((unsigned long)((unsigned)(1 + level_cmd) * (unsigned)(4 + level_index)) * delayinfo[di]) >> 8;
 			} while (level_brains < 1);
 
+			// This is the upper four bits (delay)
 			di <<= 4;
 
+			// Check for final step
 			if (level_cmd + 1 == level_size)
 				return LVC_ZOMBIE_GRAVES | di;
 		}
 		else
 			di = zombie_delays[level_rand() & 7];
 
+		// Find a random zombie, that fits into the remaining brain
+		// budget
 		LevelCommand	z;
 		do 	{
 			z = randzombie();
 		} while (zombieInfos[z].cost > level_brains || zombieInfos[z].level > level_index || zombieInfos[z].phase > level_cmd);
 
+		// Consume brain
 		level_brains -= zombieInfos[z].cost;
 
+		// Advance when all brain consumed
 		if (level_brains == 0)
 			level_cmd++;
 
@@ -1635,28 +1672,35 @@ LevelCommand level_next_command(void)
 	}
 	else
 	{
+		// Not generated level, just return the next command
+		// from the list
 		return level->cmds[level_cmd++];
 	}
 }
 
 void level_iterate(void)
 {
+	// Check for conveyor level
 	if (level->flags & LF_CONVEYOR)
 	{
+		// Is it time for the conveyor to move ?
 		if (level_conveyor > 0)
 			level_conveyor--;
 		else
 		{
+			// Find an empty slot in the conveyor
 			char x = 0;
 			while (x < menu_size && menu[x].type != PT_CONVEYOR)
 				x++;
 			if (x < menu_size)
 			{
+				// Find a random seed to put into the slot
 				unsigned	s = 0;
 				do {
 					s = rand() & 15;
 				} while (!(level->seeds & (1 << s)));
 
+				// Add the seed to the menu
 				menu_add_item_at(x, seed_info[s].plant, 0, 32, false, true);
 			}
 
@@ -1664,10 +1708,12 @@ void level_iterate(void)
 		}
 	}
 
+	// Is it time for the next command
 	if (!level_delay)
 	{
 		level_command = level_next_command();
 
+		// Extract delay
 		switch(level_command & 0xf0)
 		{
 			case LVC_DELAY_10F:
@@ -1707,9 +1753,13 @@ void level_iterate(void)
 	}
 	else
 	{
+		// Progress delay
 		level_delay--;
 		if (!level_delay)
 		{
+			// It is time for the next zombie to arrive
+
+			// Pick a random row
 			char 	i = rand() & 15;
 			char	row = level_rows[i];
 			while (i < 31)
@@ -1721,6 +1771,8 @@ void level_iterate(void)
 
 			bool	done = true;
 
+			// Add a zombie to the row if a slot in the sprite list
+			// is available
 			switch (level_command & 0x0f)
 			{
 				case LVC_ZOMBIE:
@@ -1756,6 +1808,7 @@ void level_iterate(void)
 					break;						
 
 				case LVC_ZOMBIE_GRAVES:
+					// Time to resurrect from the graves
 					zombies_grave(ZOMBIE_RESURRECT);
 					break;
 
@@ -1764,6 +1817,8 @@ void level_iterate(void)
 					break;			
 			}
 
+			// Advance progress bar, when zombie could be added, else wait five frames
+			// to check if a slot becomes available
 			if (done)
 				menu_progress(level_cmd, level_size);
 			else

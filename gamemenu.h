@@ -3,6 +3,7 @@
 
 #include "display.h"
 
+// Show menu and have player select an entry
 char gamemenu_query(const char ** menu);
 
 enum GameResponse {
@@ -16,6 +17,7 @@ enum GameResponse {
 	GMENU_FAILED
 };
 
+// Show and execute in game menu
 GameResponse gamemenu_ingame(void);
 
 
